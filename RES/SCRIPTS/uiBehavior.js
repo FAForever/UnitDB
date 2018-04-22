@@ -118,3 +118,22 @@ function openTab(class_button, id_button, class_tabClass, id_tabToOpen) {
 	}
 	document.getElementById(id_button).setAttribute("selected", "selected");
 }
+
+function loadHoverInfo(str_unitId, str_lang){
+/// Displays the unit title in a corner of the screen
+
+	if ( document.getElementById('tooltipZone') == undefined){
+		return;
+	}
+	
+	let http = new XMLHttpRequest();
+	
+	http.onload = function() {
+		console.log("Received");
+		document.getElementById('tooltipZone').innerHTML = http.responseText;
+	}
+	
+	http.open("GET", "RES/SCRIPTS/unitTitle.php?id="+str_unitId+"&localization="+str_lang+"", true);
+	http.send();
+	
+}

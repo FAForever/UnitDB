@@ -1,6 +1,7 @@
 <?php 
-	include('./RES/SCRIPTS/functions.php');
 
+	include('./RES/SCRIPTS/functions.php');
+	
 	///////////////////////////////////////
 	///									///
 	///				UNITDB 				/// 
@@ -22,6 +23,7 @@
 		"previewCorner"=>"bottom left",
 		"autoExpand"=>"0",
 		"spookyMode"=>"0",
+		"experimentalPreview"=>"0",
 		"lang"=>"US"
 	);
 	$userSettings = $defaultSettings;
@@ -45,7 +47,7 @@
 	/// STEP 3 : Checks for POST setting modification and updates the cookie if needed - and merges with the array
 	if (isset($_POST['settingsMod'])){
 		$userSettings = updateSettings($defaultSettings);
-		setcookie($cookieName, json_encode($userSettings), time()+86400*90);	// Updating the cookie
+		setcookie($cookieName, json_encode($userSettings), time()+86400*90);	// Updating the cookie. Setting it with a 90 days lifespan.
 	}	
 	
 	//END OF SPECIFIC SETTINGS LOADING
@@ -58,7 +60,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-	<link href="style.css" rel="stylesheet" type="text/css">
+	<link href="style.css?v=6" rel="stylesheet" type="text/css">
 	<link rel="icon" href="favicon.ico" />
 	<title>SCFA Unit list</title>
 	<script src="./RES/SCRIPTS/uiBehavior.js">
@@ -102,10 +104,12 @@
 		
 		/// Below is each category of information the comparator will display for the unit
 		$categories = [
-			"Section_start",	/// Dummy used to put a header on the unit's card, with name and HP.
+			"Titlecard",		/// The titlecards holds the unit name and preview, and the github link
+			"HealthDefense",	/// Displays Health and Shield in a formatted bar
+			"Economics",		/// "Economics" displays yield and drain, and engineering power
 			"Display", 			// "Display" are, for example, unit categories (Amphibious, etc...)
 			"Physics", 			// "Physics" are movespeed and such
-			"Intel", 			// "Intel" is sonar, radar
+			"Support", 			// "Support" is sonar, radar, stealth range, shield range
 			"Wreckage", 		// "Wreckage" is information about wreckage HP and mass
 			"FACTORY", 			// "FACTORY" serves to display the build list of the unit, if it can build any (Factory, crab, ...)
 			"Veteran", 			// "Veteran" displays veterancy if the unit has a weapon
@@ -145,9 +149,15 @@
 				switch ($thisComponent){
 					
 					/// Unit title and economics - common info
-					case "Section_start":
+					case "Titlecard":
 						displayUnitTitle($thisUnit, $info, $data['localization'], $userSettings['lang']);	// Basic title card with nickname, preview...
-						displayUnitHealth($info);	// Health bar
+						break;
+						
+					case "HealthDefense":
+						displayUnitHealthDefense($info, $thisUnit);	// Health bar and / or shield information
+						break;
+						
+					case "Economics":
 						displayUnitEconomics($info);// Yield and drain
 						break;
 						
@@ -157,8 +167,8 @@
 						break;
 					
 					/// Sonar, radar and vision radius
-					case "Intel":
-						displayUnitIntel($info, $thisUnit);
+					case "Support":
+						displayUnitSupport($info, $thisUnit);
 						break;
 						
 					/// Air and land physics - speed, turn rate, etc
@@ -321,7 +331,32 @@
 		
 	} 
 	
-	/// Now for the settings menu...	
+	if ($userSettings['experimentalPreview']){
+		if ($userSettings['previewCorner'] != "None"){
+		
+			/// Position of the hover-preview zone
+			$position = 'left:0px;bottom:0px;';
+			switch ($userSettings['previewCorner']){
+				case "Top left":
+					$position = 'left:0px;top:0px;';
+					break;
+					
+				case "Top right":
+					$position = 'right:0px;top:0px;';
+					break;
+					
+				case "Bottom right":
+					$position = 'right:0px;bottom:0px;';
+					break;
+			}
+			
+			/// Empty for now... Will be filled with unit title when necessary
+			
+			echo '<div id="tooltipZone" class="tooltipZone" style="'.$position.'">
+				
+			</div>';
+		}
+	}
 	?>
 	
 	<button class="settingsButton"

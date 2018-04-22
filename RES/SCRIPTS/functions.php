@@ -1,5 +1,11 @@
 <?php
 	
+	//	When debugging, uncomment the following to display errors.
+	/*
+		error_reporting(E_ALL);
+		ini_set('display_errors', 1);
+	*/
+		
 	///////////////////////////////////////
 	///									///
 	///	Functions follow.      			///
@@ -221,7 +227,7 @@
 					</select>';
 			}
 			// Both checkboxes, displayed the same way
-			else if ($settingName == "autoExpand" || $settingName == "spookyMode"){
+			else if ($settingName == "autoExpand" || $settingName == "spookyMode" || $settingName == "experimentalPreview"){
 				$checked = "";
 
 				if ($settingValue){
@@ -254,33 +260,40 @@
 		if (property_exists($thisUnit, 'Id')){
 			$id = $thisUnit->Id;
 			
-			/// Position of the hover-preview
-			$position = 'left:0px;bottom:0px;';
-			switch ($userSettings['previewCorner']){
-				case "Top left":
-					$position = 'left:0px;top:0px;';
-					break;
-					
-				case "Top right":
-					$position = 'right:0px;top:0px;';
-					break;
-					
-				case "Bottom right":
-					$position = 'right:0px;bottom:0px;';
-					break;
-			}
 			
 			/// Hover preview displaying
+			$previewTrigger = "";
+			
+			if ($userSettings['previewCorner'] != "None"){
+				$previewTrigger = 'onMouseover="loadHoverInfo(\''.($thisUnit->Id).'\', \''.($userSettings['lang']).'\')"';
+			}
 			echo '<div class="unitMainDiv tooltip"
 							id="'.($thisUnit->Id).'" 
-							onClick="toggleSelect(\''.($thisUnit->Id).'\')">';
-			if ($userSettings['previewCorner'] != "None"){
+							onClick="toggleSelect(\''.($thisUnit->Id).'\')"
+							'.$previewTrigger.'>';
+				
+			/// Hover preview, "Heavy mode"
+			if (!$userSettings['experimentalPreview'] && $userSettings['previewCorner'] != "None"){
+				/// Position of the hover-preview
+				$position = 'left:0px;bottom:0px;';
+				switch ($userSettings['previewCorner']){
+					case "Top left":
+						$position = 'left:0px;top:0px;';
+						break;
+						
+					case "Top right":
+						$position = 'right:0px;top:0px;';
+						break;
+						
+					case "Bottom right":
+						$position = 'right:0px;bottom:0px;';
+						break;
+				}
 				echo '
-					<div class="tooltiptext" style="'.$position.' background-color:'.getFactionColor($thisUnit->General->FactionName, "dark").';">
+					<div class="legacyTooltiptext" style="'.$position.'background-color:'.getFactionColor($thisUnit->General->FactionName, "dark").';">
 						'.getUnitTitle($thisUnit, $dataLoc, $userSettings['lang']).'
-					</div>';
+					</div>';	
 			}
-			
 			/// "Spooky mode" displaying preview instead of unit names
 			if ($userSettings['spookyMode']){
 				$terrain = 'none';
@@ -363,11 +376,14 @@
 							</span>';
 							
 				if (!$onCard){
+					/// Uncomment this to add a little "Compare..." text on hover
+					/*
 					echo '
 							<span style="
 								color:'.getFactionColor($armyName, "bright").';">
 								Compare...
 							</span>';
+					*/
 				};
 				echo '
 						</div>
@@ -1255,40 +1271,101 @@
 		}
 	}
 	
-	function displayUnitIntel($info, $thisUnit){
+	function displayUnitSupport($info, $thisUnit){
 		if (property_exists($thisUnit, 'Intel')){
 			$intel = $thisUnit->Intel;
 				
 			echo '
 			<div class="sheetSection">
 				<div class="smallTitle"  style="color:'.getFactionColor($info['Faction'], 'bright').';">
-				'.'Intel'.'
+				'.'Support'.'
 				</div>
 				
 				<div class="flexColumns">
 					
-					';
-					if (property_exists($intel, 'VisionRadius')) echo '
-						<div class="visionRadius" 
-							style="
-							color:'.getFactionColor($info['Faction'], 'bright').';">
-							Vision : '.($intel->VisionRadius).'
-						</div>';
-					if (property_exists($intel, 'RadarRadius')) echo '
-						<div class="radarRadius"
-							style="
-							color:'.getFactionColor($info['Faction'], 'bright').';">
-							Radar : '.($intel->RadarRadius).'
-						</div>';
-					if (property_exists($intel, 'SonarRadius')) echo '
-						<div class="sonarRadius"
-							style="
-							color:'.getFactionColor($info['Faction'], 'bright').';">
-							Sonar : '.($intel->SonarRadius).'
-						</div>';
+				';
+			if (property_exists($intel, 'VisionRadius')) echo '
+					<div class="visionRadius" 
+						style="
+						color:'.getFactionColor($info['Faction'], 'bright').';">
+						Vision : '.($intel->VisionRadius).'
+					</div>';
+			if (property_exists($intel, 'RadarRadius')) echo '
+					<div class="radarRadius"
+						style="
+						color:'.getFactionColor($info['Faction'], 'bright').';">
+						Radar : '.($intel->RadarRadius).'
+					</div>';
+			if (property_exists($intel, 'SonarRadius')) echo '
+					<div class="sonarRadius"
+						style="
+						color:'.getFactionColor($info['Faction'], 'bright').';">
+						Sonar : '.($intel->SonarRadius).'
+					</div>';
+			echo '
+				</div>';
+			
+			/// Let's display Shield or Stealth stats if needed
+			if(
+				// either it is stealthy
+				((property_exists($intel, "RadarStealth") && ($intel->RadarStealth == true)) || property_exists($intel, "RadarStealthFieldRadius")) ||
+				
+				// or it is shieldy
+				(property_exists($thisUnit, "Defense") && property_exists($thisUnit->Defense, "Shield"))
+			   ){
+				   
+				echo '
+				<div style="color:'.getFactionColor($info['Faction'], 'bright').';">';
+				
+				/// This array will be populated with the stats to display
+				$toDisplay = array();
+				
+				if((property_exists($intel, "RadarStealth") && ($intel->RadarStealth == true)) || property_exists($intel, "RadarStealthFieldRadius")){
+					/// List of elements we want to display if we find them
+					$whitelist = array(
+						"RadarStealthFieldRadius",
+						"SonarStealthFieldRadius"
+					);
+					foreach($intel as $key=>$value){
+						if (!in_array($key, $whitelist)){
+							continue;
+						}
+						$toDisplay[caseFormat($key)] = $value;
+					}
+				}
+				
+				if (property_exists($thisUnit, "Defense") && property_exists($thisUnit->Defense, "Shield")){
+				/// List of elements we want to display if we find them
+					$whitelist = array(
+						"ShieldSize",
+						"RegenAssistMult",
+						"ShieldRegenStartTime"
+					);
+					foreach($thisUnit->Defense->Shield as $key=>$value){
+						if (!in_array($key, $whitelist)){
+							continue;
+						}
+						$toDisplay[caseFormat($key)] = $value;
+					}
+				}
+				
+				foreach($toDisplay as $name=>$value){
 					echo '
-					
-				</div>
+					<div class="supportData">
+						<div class="info supportInfo">
+							'.$name.'
+						</div>
+						<div class="info supportInfoVar">
+							'.$value.'
+						</div>
+					</div>';
+				}
+				  
+				echo '
+				</div>';
+			}
+				
+			echo '
 			</div>';
 		}
 	}
@@ -1337,11 +1414,29 @@
 		echo '</div>';
 	}
 
-	function displayUnitHealth($info){
+	function displayUnitHealthDefense($info, $thisUnit){
 		echo '
 			<div class="healthBar" style="color:'.getFactionColor($info['Faction'], 'bright').';">
 				'.format($info['Health']).'HP + '.$info['Regen'].'/s
 			</div>';
+		
+		// If this is a shield, we should display "Shield HP" as well
+		if (property_exists($thisUnit->Defense, "Shield")){
+			
+			$shieldHealth = 0;
+			$shieldRegenRate = 0;
+			$shieldSize = 0;
+			
+			if (property_exists($thisUnit->Defense->Shield, "ShieldMaxHealth")) $shieldHealth = $thisUnit->Defense->Shield->ShieldMaxHealth;
+			if (property_exists($thisUnit->Defense->Shield, "ShieldRegenRate")) $shieldRegenRate = $thisUnit->Defense->Shield->ShieldRegenRate;
+			if (property_exists($thisUnit->Defense->Shield, "ShieldSize")) $shieldSize = $thisUnit->Defense->Shield->ShieldSize;
+			
+			echo '
+			<div style="color:'.getFactionColor($info['Faction'], 'bright').';" class="shieldBar unitcardShieldBar">
+				'.format($shieldHealth).'HP + '.$shieldRegenRate.'/s
+			</div>';
+		}
+		
 	}
 	
 	function displayUnitEconomics($info){
@@ -1503,6 +1598,12 @@
 	}
 	
 	function getBasicUnitInfo($thisUnit, $dataLoc, $userSettings){
+		
+		// Some units with a regenrate of 0 don't get detected properly. Putting the value to 0 if it doesn't exist, "just in case".
+		if (!property_exists($thisUnit->Defense, "RegenRate")){
+			$thisUnit->Defense->RegenRate = 0;
+		}
+		
 		/// Filling up basic unit information. **EVERY BLUEPRINT** normally has these infos.
 		return array(
 					'Description' => getDescription($thisUnit, $dataLoc, $userSettings),
@@ -1567,16 +1668,16 @@
 		return $toCompare;
 	}
 	
-	function getGameData(){
-		if (!file_exists("DATA/FALLBACK.JSON")){
+	function getGameData($dataPath = ""){
+		if (!file_exists($dataPath."DATA/FALLBACK.JSON")){
 			return false;
 		}
 		
-		$dataString = file_get_contents("DATA/FALLBACK.JSON");
+		$dataString = file_get_contents($dataPath."DATA/FALLBACK.JSON");
 		$dataFull = json_decode($dataString);
 		$dataUnits = [];
 		$dataMissiles = [];
-		$dataLoc = json_decode(file_get_contents("DATA/LANG.JSON"), true);
+		$dataLoc = json_decode(file_get_contents($dataPath."DATA/LANG.JSON"), true);
 		
 		foreach($dataFull as $thisUnit){
 			if ($thisUnit->BlueprintType == "UnitBlueprint"){
@@ -1656,6 +1757,7 @@
 					
 					case "autoExpand":
 					case "spookyMode":
+					case "experimentalPreview":
 						if (array_key_exists($key, $_POST) && $_POST[$key] == "on"){
 							$thisSetting = "1";
 						}
@@ -1769,6 +1871,20 @@
 						</p>
 					</div>
 				</div>';
+	}
+	
+	function getUnit($id, $dataUnits){
+	
+		for ($i = 0; $i < sizeOf($dataUnits); $i++){
+			$element = $dataUnits[$i];
+			$thisId = $element->Id;
+			
+			if ($id == $thisId){
+				return $element;
+				break;
+			}
+		}
+		return false;
 	}
 	
 	function getTech($unit){

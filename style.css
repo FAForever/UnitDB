@@ -23,9 +23,20 @@ summary{
 button{
 	font-family:Zeroes;
 }
-/* TOOLTIP FOLLOWING MOUSE */
 
-.tooltip .tooltiptext {
+.tooltiptext {
+	opacity:0.85;
+    visibility: hidden;
+    text-align: left;
+    padding: 5px;
+	 padding-right:20px;
+    z-index: 10;
+}
+.tooltipZone{
+    position: fixed;
+}
+
+.tooltip .legacyTooltiptext {
 	opacity:0.85;
     visibility: hidden;
     text-align: left;
@@ -34,10 +45,10 @@ button{
     z-index: 10;
 }
 
-.tooltip:hover .tooltiptext {
+.tooltip:hover .legacyTooltiptext {
     visibility: visible;
 }
-/* END OF */
+
 .blueprintLink{
 	text-decoration:none;
 }
@@ -503,4 +514,28 @@ details[open] summary.weaponCategory{
 }
 .externalBlueprint{
 	color:white;
+}
+.unitcardShieldBar{
+	height:18px;
+	font-weight:bold;
+	background:linear-gradient(to bottom, darkTurquoise, #008B8B, #006B6B, #005B5B, #006B6B, #008B8B, darkTurquoise);
+	border-top:1px solid darkTurquoise;
+	border-bottom:1px solid darkTurquoise;
+	text-shadow: 1px 1px black;
+}
+.supportInfo{
+	width:200%;
+}
+.supportInfoVar{
+	font-weight:bold;
+	text-shadow: 1px 1px black;
+}
+.supportData{
+	padding-top:6px;
+	display: flex;
+	justify-content:space-around;
+	flex-direction: row;
+}
+.supportData div{
+	border-bottom: 1px dotted grey;
 }
