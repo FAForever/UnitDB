@@ -6,19 +6,19 @@
 	$keyName = 'UNITDB_UPGRADE_SECRET';
 	
 	if (getenv($keyName) !== false){
-		
+		/*
 		if ($_GET['token'] != $_ENV[$keyName]){
 			header('HTTP/1.1 403 Forbidden');
 			exit;
 		}
-		
+		*/
 	}
 	
 	/*
 		({)(\s*(\s*'(\w|\<|\>|_| )*',*)+),\s*(})
 	
 	*/
-	require('RES/SCRIPTS/luaToPhp.php');
+	require('res/scripts/luaToPhp.php');
 	
 	function rrmdir($src) {
 		if (file_exists($src)){
@@ -75,8 +75,8 @@
 	
 	
 	//GET EXTRACTION INFO AND PREPARE FALLBACK
-	$toExtract = json_decode(file_get_contents('CONFIG/DATAFILES.JSON'));
-	$toExtractLoc = json_decode(file_get_contents('CONFIG/LOCFILES.JSON'));
+	$toExtract = json_decode(file_get_contents('config/datafiles.json'));
+	$toExtractLoc = json_decode(file_get_contents('config/locfiles.json'));
 	
 	$debug = false;
 	
@@ -84,13 +84,12 @@
 		$debug = $_GET['debug'];
 		error_reporting(E_ALL);
 		ini_set('display_errors', 1);
-		echo "<div> UNIT DB UPDATER VERSION 15.04.2018 </div>";
 		echo '<div style="color:orange;background-color:#111111;font-family:Consolas;padding:8px;">';
 	}
 	
-	file_put_contents("CONFIG/UPDATE.TMP", "If this file is present, either the database is updating or the last update failed.");	
+	file_put_contents("config/UPDATE.TMP", "If this file is present, either the database is updating or the last update failed.");	
 		
-	// STEP 0 : DOWNLOAD DATA IF NEED
+	// STEP 0 : DOWNLOAD data IF NEED
 	
 	if ($debug) echo '<p>STEP 0 ----- </p>';	////////DEBUG
 	if (isset($_GET['version']) && $_GET['version'] != "local"){
@@ -111,9 +110,9 @@
 		
 		
 		$neededFiles = array(
-			"units.nx2"=>"DATA/GAMEDATA/", 
-			"projectiles.nx2"=>"DATA/GAMEDATA/", 
-			"loc.nx2"=>"DATA/LOC/"
+			"units.nx2"=>"data/gamedata/", 
+			"projectiles.nx2"=>"data/gamedata/", 
+			"loc.nx2"=>"data/loc/"
 		); 
 		
 		$jsonString = file_get_contents($url);
@@ -147,7 +146,7 @@
 	
 	
 	
-	//STEP 1 : UNZIP DATA
+	//STEP 1 : UNZIP data
 	
 	if ($debug) echo '<p>STEP 1 ----- </p>';	////////DEBUG
 	
@@ -161,12 +160,12 @@
 				$name = ($zip->statIndex($i)['name']);
 				if ($debug) echo '<p>--> Found file '.$name.'</p>';	////////DEBUG
 				if (strpos(basename($name), '.bp') !== false){
-					if ($debug) echo '<p>---> Extracting '.$name.' to DATA/_TEMP/'.$toExtract[$h].'/ ...</p>';	////////DEBUG
-					$success = $zip->extractTo('DATA/_TEMP/'.$toExtract[$h].'/',($name));    //Ex : extracts "units.scd.3599" to /DATA/GAMEDATA/_TEMP/units.scd.3599
+					if ($debug) echo '<p>---> Extracting '.$name.' to data/_temp/'.$toExtract[$h].'/ ...</p>';	////////DEBUG
+					$success = $zip->extractTo('data/_temp/'.$toExtract[$h].'/',($name));    //Ex : extracts "units.scd.3599" to /data/gamedata/_temp/units.scd.3599
 					
 					// Let's assure the unit blueprint has the right casing
-					$basename = basename('DATA/_TEMP/'.$toExtract[$h].'/'.$name);
-					$path = str_replace($basename, "", 'DATA/_TEMP/'.$toExtract[$h].'/'.$name);
+					$basename = basename('data/_temp/'.$toExtract[$h].'/'.$name);
+					$path = str_replace($basename, "", 'data/_temp/'.$toExtract[$h].'/'.$name);
 					if ($debug) echo '<p>---> Renaming '.$path.$basename. " to ". $path.strtoupper($basename).'</p>';	////////DEBUG
 					rename($path.$basename, $path.strtoupper($basename));
 					
@@ -186,21 +185,21 @@
 		if ($debug) echo '<p> -> '.$failed.' files could not be extracted. </p>';	////////DEBUG
 	}
 	
-	//LOC -->
+	//loc -->
 	$failed = 0;
-	if ($debug) echo '<p>-> Opening LOC Files... </p>';	////////DEBUG
+	if ($debug) echo '<p>-> Opening loc Files... </p>';	////////DEBUG
 	foreach($toExtractLoc as $locArch){
 			
 		$zip = new ZipArchive;
 		
 		if ($zip->open(''.($locArch).'') === TRUE) {
 			
-			if ($debug) echo '<p>-> Opened LOC archive '.$locArch.' and found '.($zip->numFiles).' files. </p>';	////////DEBUG
+			if ($debug) echo '<p>-> Opened loc archive '.$locArch.' and found '.($zip->numFiles).' files. </p>';	////////DEBUG
 			
 			for ($i=0; $i<$zip->numFiles;$i++) {
 				$name = $zip->statIndex($i)['name'];
 				if (strpos($name, '.lua') !== false){
-					$zip->extractTo('DATA/_TEMP/'.$locArch.'/', $name);
+					$zip->extractTo('data/_temp/'.$locArch.'/', $name);
 				}
 			}
 			
@@ -208,12 +207,12 @@
 		} 
 		
 		else {
-			if ($debug) echo '<p>-> FAILED opening LOC archive '.$locArch.' </p>';	////////DEBUG
+			if ($debug) echo '<p>-> FAILED opening loc archive '.$locArch.' </p>';	////////DEBUG
 			$failed++;
 		}
 	}
 	if ($failed > 0){
-		if ($debug) echo '<p> ->'.$failed.' LOC files could not be extracted. </p>';	////////DEBUG
+		if ($debug) echo '<p> ->'.$failed.' loc files could not be extracted. </p>';	////////DEBUG
 	}
 	//endof
 	
@@ -223,7 +222,7 @@
 	
 	$idsUnitsList = [];
 	$finalLangs = [];
-	$dir = 'DATA/_TEMP/';
+	$dir = 'data/_temp/';
 	if (is_dir($dir)){
 		if ($debug) echo '<p>-> Directory '.$dir.' found </p>';	////////DEBUG
 		foreach($toExtract as $fileFolder) { //For every PAK to use, like units.3599.scd or units.nx2
@@ -301,12 +300,12 @@
 			
 		}
 		
-		//LOC
+		//loc
 		$totalLines = 0;
 		foreach($toExtractLoc as $locFolder){
 			$realPath = $dir.$locFolder;
 			
-			if ($debug) echo '<p>-> Working on LOC '.$realPath.'</p>';	////////DEBUG
+			if ($debug) echo '<p>-> Working on loc '.$realPath.'</p>';	////////DEBUG
 			
 			if (!is_dir($realPath)){
 				if ($debug) echo '<p>--> No directory, SKIPPING </p>';	////////DEBUG
@@ -342,7 +341,7 @@
 				$thisPakLangs = array_merge($thisPakLangs, $thisSubfolderLocList);
 			}
 			
-			if ($debug) echo '<p>-> Total files found for LOC '.$realPath.' : '.$totalLines.' </p>';	////////DEBUG
+			if ($debug) echo '<p>-> Total files found for loc '.$realPath.' : '.$totalLines.' </p>';	////////DEBUG
 			$finalLangs = array_merge($finalLangs, $thisPakLangs);
 			
 		}
@@ -362,8 +361,8 @@
 	foreach($idsUnitsList as $thisUnit){
 		$finalUnitList[]= $thisUnit;
 	}
-	file_put_contents('DATA/FALLBACK.JSON', json_encode($finalUnitList));
-	file_put_contents('DATA/LANG.JSON', json_encode($finalLangs));
+	file_put_contents('data/blueprints.json', json_encode($finalUnitList));
+	file_put_contents('data/localization.json', json_encode($finalLangs));
 	
 	//STEP 4 : CLEANING UP
 	
@@ -380,7 +379,7 @@
 		};
 	}
 	
-	unlink("CONFIG/UPDATE.TMP");
+	unlink("config/UPDATE.TMP");
 	
 	if ($debug) echo '<p>Unliked UPDATE.TMP - all operations complete.</p>';	////////DEBUG
 	
