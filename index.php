@@ -1,6 +1,6 @@
 <?php 
 
-	include('./RES/SCRIPTS/functions.php');
+	include('./res/scripts/functions.php');
 	
 	///////////////////////////////////////
 	///									///
@@ -60,10 +60,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-	<link href="style.css?v=6" rel="stylesheet" type="text/css">
+	<link href="style.css?v=<?php echo time();?>" rel="stylesheet" type="text/css">
 	<link rel="icon" href="favicon.ico" />
 	<title>SCFA Unit list</title>
-	<script src="./RES/SCRIPTS/uiBehavior.js">
+	<script src="./res/scripts/uiBehavior.js">
 		//// 
 		///	Most javascript functions simply are display and interface functions
 		///	

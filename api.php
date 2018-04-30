@@ -1,12 +1,12 @@
 <?php
 	header('Content-Type: application/json');
 	
-	$dataString = file_get_contents("DATA/FALLBACK.JSON");
+	$dataString = file_get_contents("data/blueprints.json");
 	$dataFull = json_decode($dataString);
 	$dataUnits = [];
 	$dataMissiles = [];
 	
-	$locData = json_decode(file_get_contents("DATA/LANG.JSON"), true);
+	$locData = json_decode(file_get_contents("data/localization.json"), true);
 	
 	foreach($dataFull as $thisUnit){
 		if ($thisUnit->BlueprintType == "UnitBlueprint"){

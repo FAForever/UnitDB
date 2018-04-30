@@ -6,7 +6,7 @@ div {
 
 @font-face {
  font-family: "Zeroes";
- src: url("RES/FONTS/zeroes_3.ttf");
+ src: url("res/fonts/zeroes_3.ttf");
 }
 
 html{
@@ -46,6 +46,36 @@ button{
 }
 
 .tooltip:hover .legacyTooltiptext {
+    visibility: visible;
+}
+
+/* Tooltip container */
+.bubbleInfo {
+    position: relative;
+    display: inline-block;
+}
+
+/* Tooltip text */
+.bubbleInfo .bubbleText {
+    visibility: hidden;
+    width: 140px;
+    top: 100%;
+    left: 50%; 
+    margin-left: -70px; 
+    background-color: #303030;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+	border:1px solid grey;
+ 
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 2;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.bubbleInfo:hover .bubbleText {
     visibility: visible;
 }
 
