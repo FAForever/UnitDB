@@ -45,7 +45,7 @@
 					$name .= "donut ";
 			}
 			//Endof
-			
+			*/
 			$name .= ($element->General->FactionName).' '.getTech($element);
 			
 			if (property_exists($element->General, 'UnitName')){
@@ -54,7 +54,7 @@
 			if (property_exists($element, 'Description')){
 				$name .= ($element->Description);
 			}
-			
+			/*
 			//All the names
 			if (strpos(strtolower($name), "extractor") !== false){
 				$name .=  " mex mexes ";
