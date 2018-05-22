@@ -1389,13 +1389,17 @@
 			echo '
 				</div>';
 			
-			/// Let's display Shield or Stealth stats if needed
+			/// Let's display additional support stats if needed
 			if(
 				// either it is stealthy
 				((property_exists($intel, "RadarStealth") && ($intel->RadarStealth == true)) || property_exists($intel, "RadarStealthFieldRadius")) ||
 				
 				// or it is shieldy
-				(property_exists($thisUnit, "Defense") && property_exists($thisUnit->Defense, "Shield"))
+				(property_exists($thisUnit, "Defense") && property_exists($thisUnit->Defense, "Shield")) ||
+				
+				// or it has omni or watervisionradius
+				(property_exists($thisUnit, "Intel") && (property_exists($thisUnit->Intel, "WaterVisionRadius") || property_exists($thisUnit->Intel, "OmniRadius")))
+				
 			   ){
 				   
 				echo '
@@ -1405,7 +1409,7 @@
 				$toDisplay = array();
 				
 				if((property_exists($intel, "RadarStealth") && ($intel->RadarStealth == true)) || property_exists($intel, "RadarStealthFieldRadius")){
-					/// List of elements we want to display if we find them
+					/// List of STEALTH elements we want to display if we find them
 					$whitelist = array(
 						"RadarStealthFieldRadius",
 						"SonarStealthFieldRadius"
@@ -1419,7 +1423,7 @@
 				}
 				
 				if (property_exists($thisUnit, "Defense") && property_exists($thisUnit->Defense, "Shield")){
-				/// List of elements we want to display if we find them
+				/// List of SHIELD elements we want to display if we find them
 					$whitelist = array(
 						"ShieldSize",
 						"RegenAssistMult",
@@ -1433,6 +1437,20 @@
 					}
 				}
 				
+				/// Other support elements we might want to display 
+				$whitelist = array(
+						"WaterVisionRadius",
+						"OmniRadius"
+						);
+				
+				foreach($thisUnit->Intel as $key=>$value){
+					if (!in_array($key, $whitelist)){
+						continue;
+					}
+					$toDisplay[caseFormat($key)] = $value;
+				}
+				
+				/// Actual display
 				foreach($toDisplay as $name=>$value){
 					echo '
 					<div class="supportData">
