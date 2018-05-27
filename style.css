@@ -190,6 +190,9 @@ input[type=checkbox]{
 	color:white;
 	background:linear-gradient(to bottom, #333333, #222222, #333333);
 }
+.firstUnitCompared{
+	border-top: 1px solid white;
+}
 .unitCompared{
 	flex-shrink:0;
 	display: flex;
@@ -229,7 +232,7 @@ input[type=checkbox]{
 
 .previewImg{
 	flex-shrink:0;
-	border: 1px solid white;
+	/* border: 1px solid white; */
 	position: relative;
 	width: 64px;
 	height: 64px;
@@ -240,6 +243,7 @@ input[type=checkbox]{
 	display: flex;
 	justify-content:flex-start;
 	flex-direction: row;
+	padding-right:12px;
 }
 
 .previewTitle{
@@ -422,8 +426,8 @@ details[open] summary.weaponCategory{
 	border-top:0px;
 }
 .comparatorRemoveButton{
-	color:red;
-	background-color:rgba(0,0,0,0.25);
+	background-color:red;
+	color:white;
 	position:absolute;
 	right:0;
 	top:0;

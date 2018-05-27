@@ -1971,7 +1971,7 @@
 		if (property_exists($unit, 'Description')){
 			$description = attemptTranslation($unit->Description, $dataLoc, $lang);
 		}
-		return '<div class="unitTitleBar" style="border-top:1px solid white;">
+		return '<div class="unitTitleBar">
 					<div class="previewImg">
 						<img alt="" class="backgroundIconOverlap" src="res/img/preview_background/'.($terrain).'_up.png">
 						<img alt="?" class="strategicIcon" style= "width:64px;height:64px;" src="res/img/preview/'.strtoupper($unit->Id).'.png">
