@@ -754,17 +754,19 @@
 			/// Count duplicate weapons so we can display them as "x2"  "x3"  etc
 			$alreadyDisplayed = array();	// Used to not display dupes twice
 			$registeredWeapons = array();	// Used to count amount of same weapons
+            
 			foreach($weapons as $property=>$thisWeapon){
 				$found = false;
 				foreach($registeredWeapons as $key=>$thisRegisteredWeapon){
+                
 					if (sameWeapon($thisWeapon, $thisRegisteredWeapon)){
 						$thisRegisteredWeapon = (array)$thisRegisteredWeapon;
-						if (!array_key_exists("Occurences", $thisWeapon)){
-							$thisRegisteredWeapon ["Occurences"] = 2;
+                        
+						if (!array_key_exists("Occurences", $thisRegisteredWeapon)){
+							$thisRegisteredWeapon ["Occurences"] = 1;
 						}
-						else{
-							$thisRegisteredWeapon ["Occurences"]++;
-						}
+                        $thisRegisteredWeapon ["Occurences"]++;
+                        
 						$thisRegisteredWeapon = (object)$thisRegisteredWeapon;
 						$registeredWeapons[$key] = $thisRegisteredWeapon;
 						$found = true;
@@ -778,7 +780,7 @@
 				}
 			}
 			$weapons = $registeredWeapons;
-			
+            
 			/// For each weapon...
 			foreach($weapons as $thisWeapon){
 				$skip = false;
