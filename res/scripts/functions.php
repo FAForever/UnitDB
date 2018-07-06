@@ -433,7 +433,7 @@
 	
 	function displayUnitlistTechs($catName, $categories, $userSettings, $armies, $dataLoc){
 		/// The order in which techs will be displayed
-		$techOrder = ['', 'T1 ', 'T2 ', 'T3 ', 'Experimental '];
+		$techOrder = ['', 'T1 ', 'T2 ', 'T3 ', 'T4 '];
 		
 		/// By default, the category will be opened unless it is "Civilian & Miscellanous".
 		$open = "open";
@@ -2024,7 +2024,7 @@
 			$unitTech = "T3 ";
 		}
 		else if (in_array ('EXPERIMENTAL', $unitCat)){
-			$unitTech = "Experimental ";
+			$unitTech = "T4  ";
 		}
 		return $unitTech;
 	}
