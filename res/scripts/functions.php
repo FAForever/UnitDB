@@ -576,7 +576,7 @@
 									src="res/img/enhancements/'.$info['Faction'].'/'.($thisEnhancement->Icon).'_btn_up.png"
 									class="enhancementImg">
 											
-									['.($thisEnhancement->Slot).'] '.($thisEnhancement->Name).'
+									['.($thisEnhancement->Slot).'] '.attemptTranslation($thisEnhancement->Name, $dataLoc, $userSettings['lang']).'
 								</summary>
 							<div class="flexRows">
 								<div class="info"  style="font-weight:normal;color:'.getFactionColor($info['Faction'], 'bright').';">
@@ -834,7 +834,7 @@
 			/// Displaying name of the weapon
 			echo '<details class="weaponList" '.$autoOpen.'> 
 					<summary  class="weaponCategory">
-						'.$duplicates.($thisWeapon->DisplayName).'
+						'.$duplicates.(attemptTranslation($thisWeapon->DisplayName, $dataLoc, $userSettings['lang'])).'
 					</summary>
 					<div class="flexRows">';
 					
@@ -1733,9 +1733,10 @@
 		if (property_exists($thisUnit, 'Description')){
 			$description = ($thisUnit->Description);
 			$matches = [];
-			if (preg_match ('/(<loc.*>+)/', $description, $matches)){
+			if (preg_match ('/(<loc.*>+)/', $description, $matches) || preg_match ('/(<LOC.*>+)/', $description, $matches)){
 				$line = $matches[0];
 				$line = str_replace('<loc ', '', $line);
+				$line = str_replace('<LOC ', '', $line);
 				$line = str_replace('>', '', $line);
 				$thisLang = $dataLoc[$userSettings['lang']];
 				if (is_array($thisLang) && array_key_exists($line, $thisLang)){
@@ -2049,20 +2050,23 @@
 	}
 	
 	function attemptTranslation($string, $dataLoc, $thisLang){
+        
 		if ($dataLoc == null){
 			return $string;
 		}
 		$matches = [];
-		if (preg_match ('/(<loc.*>+)/', $string, $matches)){
+        
+		if (preg_match ('/(<LOC.*>+)/', $string, $matches)){
+            
 			$line = $matches[0];
-			$line = str_replace('<loc ', '', $line);
+			$line = str_replace('<LOC ', '', $line);
 			$line = str_replace('>', '', $line);
 			
 			if (array_key_exists($line, $dataLoc[$thisLang])){
 				$string = str_replace('"', '', $dataLoc[$thisLang][$line]);
 			}
 		}	
-		$string = preg_replace ('/(<loc.*>+)/', '', $string);
+		$string = preg_replace ('/(<LOC.*>+)/', '', $string);
 		
 		return $string;
 	}
