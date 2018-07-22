@@ -1226,7 +1226,7 @@
 				
 			echo ' 	<div class="flexColumns" style="color:'.getFactionColor($info['Faction'], 'bright').';">';
 				$hpMul = $thisUnit->Wreckage->HealthMult;
-				$massMul = $thisUnit->Wreckage->MassMult;
+				$massMul = $thisUnit->Wreckage->MassMult * $hpMul;
 				$hp = $info['Health']*$hpMul;
 				$mass = ($info['Economy']->BuildCostMass) * $massMul;
 				
