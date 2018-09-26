@@ -1764,7 +1764,7 @@
 	}
 	
 	function getUnitsToCompare($get, $dataUnits){
-		$list = array_unique(explode(',', $get));
+		$list = array_unique(explode(',', strtoupper($get)));
 		$toCompare = array();
 		
 		for ($i = 0; $i < sizeOf($dataUnits); $i++){
