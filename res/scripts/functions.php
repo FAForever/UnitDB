@@ -325,7 +325,7 @@
 						<div class="previewImg">
 							<img alt="?" class="backgroundIconOverlap" src="res/img/preview_background/'.($terrain).'_up.png">
 							<img alt="?" class="strategicIcon" style= "width:64px;height:64px;" src="res/img/preview/'.strtoupper($thisUnit->Id).'.png">
-							<img alt="[x]" class="strategicIconOverlap" src="res/img/strategic/'.($strategic).'_rest.png" style="filter: contrast(70%) sepia(300%) brightness(150%) hue-rotate('.(getFactionColor($thisUnit->General->FactionName, 'hue')-63).'deg) saturate(300%) brightness(70%) contrast(200%) brightness(130%);">
+							<img alt="[x]" class="strategicIconOverlap" src="res/img/strategic/'.($strategic).'_rest.png" style="filter: hue-rotate('.(getFactionColor($armyName, 'hue')).'deg)">
 						</div>
 					</div>';
 			}
@@ -342,9 +342,9 @@
 				}
 				
 				/// Custom style for icon hue because of PHP-dynamic faction hue
-				echo '
-						<div  class="strategicIconDiv" style="filter: contrast(70%) sepia(300%) brightness(150%) hue-rotate('.(getFactionColor($armyName, 'hue')-63).'deg) saturate(300%) brightness(70%) contrast(200%) brightness(130%);" >
-							<img src="res/img/strategic/'.$icon.'.png" alt="[x]">
+                echo '
+						<div class="strategicIconDiv">'.                        
+						'<img style="filter: hue-rotate('.(getFactionColor($armyName, 'hue')).'deg)" src="res/img/strategic/'.$icon.'.png" alt="[x]">
 						</div>';
 				
 				/// Translates name of both unit name an description if possible
@@ -1912,7 +1912,7 @@
 				$color['normal'] = "#F4B350";
 				$color['bright'] = "#FDE3A7";
 				$color['dark'] = "#664d00";
-				$color['hue'] = 53;
+				$color['hue'] = 20;
 				break;
 				
 			case "UEF" :
@@ -1978,7 +1978,7 @@
 					<div class="previewImg">
 						<img alt="" class="backgroundIconOverlap" src="res/img/preview_background/'.($terrain).'_up.png">
 						<img alt="?" class="strategicIcon" style= "width:64px;height:64px;" src="res/img/preview/'.strtoupper($unit->Id).'.png">
-						<img alt="[x]" class="strategicIconOverlap" src="res/img/strategic/'.($strategic).'_rest.png" style="filter: contrast(70%) sepia(300%) brightness(150%) hue-rotate('.(getFactionColor($unit->General->FactionName, 'hue')-63).'deg) saturate(300%) brightness(70%) contrast(200%) brightness(130%);">
+						<img alt="[x]" class="strategicIconOverlap" src="res/img/strategic/'.($strategic).'_rest.png" style="filter: hue-rotate('.(getFactionColor($armyName, 'hue')).'deg)">
 					</div>
 					<div style="color:'.getFactionColor($unit->General->FactionName, 'bright').';" >
 						<p  class="previewTitle">
