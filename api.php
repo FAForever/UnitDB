@@ -1,6 +1,11 @@
 <?php
 	header('Content-Type: application/json');
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
 	
+    ///////
+    // Loading data
+    //
 	$dataString = file_get_contents("data/blueprints.json");
 	$dataFull = json_decode($dataString);
 	$dataUnits = [];
@@ -16,37 +21,23 @@
 			$dataMissiles[]=$thisUnit;
 		}
 	}
-	
-	
-	if (isset($_GET['id']) || isset($_GET['searchunit'])){
-		
-		$requested = $_GET["id"];
-		$searchName = $_GET["searchunit"];
+    
+    //
+    //////
+    
+    $commands = array();
+    
+    //////////////////////////////////
+    ///
+    ///  Search for a specific unit
+    ///
+    $commands["searchunit"] = function($data){
 		$uOI = null;
-		
-		for ($i = 0; $i < sizeOf($dataUnits); $i++){
-			$element = $dataUnits[$i];
+		$units = $GLOBALS["dataUnits"];
+		for ($i = 0; $i < sizeOf($units); $i++){
+			$element = $units[$i];
 			$id = $element->Id;
-			$name = $id .=  " ";
-			
-			/*
-			
-			//Nicknames
-			switch ($id){
-				case "XSL0401 ":
-					$name .=  "chicken ";
-					break;
-					
-				case "UAL0401 ":
-					$name .= "gc ";
-					break;
-					
-				case "UAA0310 ":
-					$name .= "donut ";
-			}
-			//Endof
-			*/
-			$name .= ($element->General->FactionName).' '.getTech($element);
+			$name = $id .=  " " .($element->General->FactionName).' '.getTech($element);
 			
 			if (property_exists($element->General, 'UnitName')){
 				$name .= ' "'.($element->General->UnitName).'" ';
@@ -54,29 +45,8 @@
 			if (property_exists($element, 'Description')){
 				$name .= ($element->Description);
 			}
-			/*
-			//All the names
-			if (strpos(strtolower($name), "extractor") !== false){
-				$name .=  " mex mexes ";
-			}
-			if (strpos(strtolower($name), "strategic missile launcher") !== false){
-				$name .= " nuke SML ";
-			}
-			if (strpos(strtolower($name), "strategic missile defense") !== false){
-				$name .= " SMD ";
-			}
-			if (strpos(strtolower($name), "tactical missile launcher") !== false){
-				$name .= " TML ";
-			}
-			if (strpos(strtolower($name), "tactical missile defense") !== false){
-				$name .= " TMD ";
-			}
-			if (strpos(strtolower($name), "power generator") !== false && getTech($element) == "T1 "){
-				$name .= " pgen ";
-			}
-			//endof
-			*/
-			if ($id == $requested || strpos(strtolower($name), strtolower($searchName)) !== false){
+            
+			if ($id == $data || strpos(strtolower($name), strtolower($data)) !== false){
 				$uOI = $element;
 				$uOI = (array)$uOI;
 				$uOI['ApiName'] = $name;
@@ -85,11 +55,34 @@
 			}
 		}
 		
-		echo json_encode($uOI);
-		exit;
-		
-	}
+		return json_encode($uOI);
+    };
+    ///
+    ///  
+    //////////////////////////////////
 	
+    
+    
+    
+    //////
+    // Main execution of commands
+    //
+    
+    foreach($commands as $name=>$function){
+        if (isset($_GET[$name])){
+            $data = $function($_GET[$name]);
+            echo $data;
+            exit;
+        }
+    }	
+    //
+    //////    
+    
+    
+    //////////////////////////////////
+    ///
+    ///  Utilitary functions
+    ///
 	
 	function getTech($unit){
 			
@@ -110,6 +103,4 @@
 		}
 		return $unitTech;
 	}
-	
-	
 ?>
