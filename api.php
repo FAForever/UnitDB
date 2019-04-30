@@ -1,7 +1,5 @@
 <?php
 	header('Content-Type: application/json');
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
 	
     ///////
     // Loading data
@@ -56,6 +54,64 @@
 		}
 		
 		return json_encode($uOI);
+    };
+    // alias
+    $commands["id"] = $commands["searchunit"];
+    ///
+    ///  
+    //////////////////////////////////
+    
+    //////////////////////////////////
+    ///
+    ///  Get missile by id
+    ///
+    $commands["projectileid"] = function($data){
+        
+		$projs = $GLOBALS["dataMissiles"];
+        foreach($projs as $proj){
+            if ($proj->Id == $data){
+                
+                return json_encode($proj);
+                
+            }
+            
+        }
+        
+    };
+    ///
+    ///  
+    //////////////////////////////////
+    
+    //////////////////////////////////
+    ///
+    ///  List units
+    ///
+    $commands["listunits"] = function($data){
+        $list = array();
+		$units = $GLOBALS["dataUnits"];
+        foreach($units as $unit){
+            $list []= $unit->Id;
+        }
+		return json_encode($list);
+    };
+    ///
+    ///  
+    //////////////////////////////////
+    
+    //////////////////////////////////
+    ///
+    ///  List data
+    ///
+    $commands["listdata"] = function($data){
+        $list = array("units"=>[], "missiles"=>[]);
+		$units = $GLOBALS["dataUnits"];
+        foreach($units as $unit){
+            $list ["units"] []= $unit->Id;
+        }
+        foreach($GLOBALS["dataMissiles"] as $miss){
+            $list ["missiles"] []= $miss->Id;
+        }
+		return json_encode($list);
     };
     ///
     ///  
