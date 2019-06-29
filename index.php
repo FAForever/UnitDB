@@ -188,7 +188,7 @@
 						
 					/// Weapon list
 					case "Weapon":
-						displayWeaponList($info, $thisUnit, $userSettings, $data['missiles']);
+						displayWeaponList($info, $thisUnit, $data['localization'], $userSettings, $data['missiles']);
 						break;
 						
 					/// ACU/SACU upgrades

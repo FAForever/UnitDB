@@ -104,62 +104,71 @@ function array_id($str)
 */
 function luaparser($lua, &$pos){
 	
-			//print_r("<font color=blue>==>LUAPARSER FIRED</font><br>");
-	$counter = 0;
-  $parray = array();
-  $stop = false;
-  if ($pos < count($lua)) 
-  {
-    for ($i = $pos;$stop ==false;){
-		
-		$resetCounter = true;
-		  if ($i >= count($lua)) { 
-			$stop=true;
-		  }
-		  if (array_key_exists($i, $lua)) {
-				$strs = explode("=",($lua[$i]));
-				//var_dump($strs);
-		  }
-		  if (array_key_exists(1, $strs) && trim($strs[1]) == "{"){
-			$i++;
-			//print_r("<font color=red>CHILDING INTO ANOTHER LUAPARSER</font><br>");
-			$parray[array_id(trim($strs[0]))]=luaparser($lua, $i);
-			//print_r("<font color=red>ENDOF</font><br>");
-		  } 
-		  else if (trim($strs[0]) == "}" || trim($strs[0]) == "},")
-		  {
-			//$i--;
-			$i++;
-			$stop = true;
-		  }
-		  else
-		  {
-			$i++;
-			if (strlen(array_id(trim($strs[0])))>0 && (array_key_exists(1, $strs) && strlen($strs[1])>0)) 
-			{
-			  $parray[array_id(trim($strs[0]))]=trimval($strs[1]);
-				//var_dump('--------- '.array_id(trim($strs[0])).'=>'.trimval($strs[1]).' -----------');
-			}
-			else if (trim($strs[0]) != '{' && trim($strs[0]) != '['){
-				$resetCounter = false;
-				$parray[$counter]=trimval($strs[0]);
-				//var_dump('--------- Adding keyless array element -----------');
-			}
-			else{
-				$parray[array_id("Property".$i)]=luaparser($lua, $i);
-				//echo "<font color=blue>".array_id("Property".$i)."</font>";
-			}
-		  } 
-		  if ($resetCounter){
-			  $counter = 0;
-		  }
-		  else{
-			  $counter++;
-		  }
+    $counter = 0;
+    $parray = array();
+    $stop = false;
+    if ($pos < count($lua)) 
+    {
+        for ($i = $pos;$stop ==false;){
+            
+            $resetCounter = true;
+              if ($i >= count($lua)) { 
+                $stop=true;
+              }
+              if (array_key_exists($i, $lua)) {
+                    $strs = explode("=",($lua[$i]));
+              }
+              if (array_key_exists(1, $strs) && trim($strs[1]) == "{"){
+                $i++;
+                $parray[array_id(trim($strs[0]))]=luaparser($lua, $i);
+              } 
+              else if (trim($strs[0]) == "}" || trim($strs[0]) == "},")
+              {
+                $i++;
+                $stop = true;
+              }
+              else
+              {
+                $i++;
+                if (strlen(array_id(trim($strs[0])))>0 && (array_key_exists(1, $strs) && strlen($strs[1])>0)) 
+                {
+                  $parray[array_id(trim($strs[0]))]=trimval($strs[1]);
+                }
+                else if (trim($strs[0]) != '{' && trim($strs[0]) != '['){
+                    $resetCounter = false;
+                    $parray[$counter]=trimval($strs[0]);
+                }
+                else{
+                    $parray[array_id("%".$i)]=luaparser($lua, $i);
+                }
+              } 
+              if ($resetCounter){
+                  $counter = 0;
+              }
+              else{
+                  $counter++;
+              }
+        }
+        $pos=$i;
     }
-	$pos=$i;
-  }
-  return $parray;
+    
+    $parray = cleanArrays($parray);
+    return $parray;
+}
+
+function cleanArrays($array){
+    $index = 0;
+    foreach($array as $key=>$element){
+        if (is_array($element)){
+            cleanArrays($element);
+        }
+        if ($key[0]==="%"){
+            $array[$index] = $element;
+            unset($array[$key]);
+            $index++;
+        }
+    }
+    return $array;
 }
 
 /*

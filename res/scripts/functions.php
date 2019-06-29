@@ -1,10 +1,12 @@
 <?php
 	
 	//	When debugging, uncomment the following to display errors.
-	/*
+	
 		error_reporting(E_ALL);
 		ini_set('display_errors', 1);
-	*/
+	
+    
+    include("calculations.php");
 		
 	///////////////////////////////////////
 	///									///
@@ -46,12 +48,13 @@
 			/// The order in which these Else IF are structured is important. Changing them might allow categorizing Fatboy as "Factory" instead of "Land unit", for example. The unit will be categorized in the first matching category.			
 			
 			//////////////
-			//	CIVILIAN
+			//	CIVILIAN & DEBUG
 			// Every non-multiplayer-relevant unit should go there
 			/////////////
 			if (in_array('OPERATION', $item->Categories) || 
 				in_array('CIVILIAN', $item->Categories) ||
-				in_array('INSIGNIFICANTUNIT', $item->Categories)){
+				in_array('INSIGNIFICANTUNIT', $item->Categories) ||
+				in_array('DEBUG', $item->Categories)){
 					
 				$finalData['Civilian & Miscellanous'][""][$faction][$item->Id] = $item;
 			}
@@ -740,7 +743,7 @@
 		}
 	}
 	
-	function displayWeaponList($info, $thisUnit, $userSettings, $dataMissiles){
+	function displayWeaponList($info, $thisUnit, $dataLoc, $userSettings, $dataMissiles){
 		
 		if (property_exists($thisUnit, "Weapon")){
 			echo '<div class="sheetSection">
@@ -791,7 +794,7 @@
 					}
 				}
 				if (!$skip){
-					displayWeapon($thisWeapon, $info, $thisUnit, $userSettings, $dataMissiles, $thisWeapon->Occurences);
+					displayWeapon($thisWeapon, $info, $thisUnit, $dataLoc, $userSettings, $dataMissiles, $thisWeapon->Occurences);
 					$alreadyDisplayed [] = $thisWeapon;
 				}
 			}
@@ -816,7 +819,7 @@
 		return $same;		
 	}
 	
-	function displayWeapon($thisWeapon, $info, $thisUnit, $userSettings, $dataMissiles, $occurences=1){
+	function displayWeapon($thisWeapon, $info, $thisUnit, $dataLoc, $userSettings, $dataMissiles, $occurences=1){
 		if (property_exists($thisWeapon, 'DisplayName')){
 			$autoOpen = '';
 			
@@ -871,13 +874,27 @@
 						</div>
 					</div>';
 			}	
+            
+            /// Approximate DPS
+			if (property_exists($thisWeapon, 'Damage') &&
+				$thisWeapon->Damage > 0 &&
+                $thisWeapon->WeaponCategory != "Death"){ 
+				echo '<div class="flexColumns weaponLine" style="background-color:'.getFactionColor($info['Faction'], 'bright').';">
+						<div class="littleInfo" style="color:'.getFactionColor($info['Faction'], 'dark').';">
+							<b>Approximate DPS</b>
+						</div>
+						<div class="littleInfoVar" style="color:'.getFactionColor($info['Faction'], 'dark').';">
+							<b>'.format(calculateDps($thisWeapon, $info['Id'])).'</b>
+						</div>
+                    </div>';
+            }
 			
 			/// Specific Damage styled display if the weapon has damage
 			if (property_exists($thisWeapon, 'Damage') &&
 				$thisWeapon->Damage > 0){ 
 				echo '<div class="flexColumns weaponLine">
 						<div class="littleInfo" >
-							Damage
+							Raw Dmg
 						</div>
 						<div class="littleInfoVar" >
 							'.format($thisWeapon->Damage).'
@@ -907,18 +924,17 @@
 							</div>
 						</div>';
 				}
-			else if (property_exists($thisWeapon, 'RateOfFire') && 
-				property_exists($thisWeapon, 'ProjectilesPerOnFire') &&
-				$thisWeapon->ProjectilesPerOnFire > 1){ 
+			else if (property_exists($thisWeapon, 'MuzzleSalvoSize')){ 
 				echo '<div class="flexColumns weaponLine">
 						<div class="littleInfo" >
 							Fire cycle
 						</div>
 						<div class="littleInfoVar" >
-							'.($thisWeapon->ProjectilesPerOnFire).' projectiles / shot
+							'.calculateFireCycle($thisWeapon).' projectiles / shot
 						</div>
 					</div>';
 			}		
+
 			
 			// Displaying range of the weapon - both minradius and maxradius if available
 			if (property_exists($thisWeapon, 'MaxRadius') &&
@@ -1081,7 +1097,7 @@
 		// If the unit has only one weapon, it is NOT a death weapon (else the power generators would be vetting)
 		
 		if (property_exists($thisUnit, 'Weapon') && 
-			(count((array)$thisUnit->Weapon) > 1 || (property_exists(array_values(get_object_vars ($thisUnit->Weapon))[0], "WeaponCategory") && array_values(get_object_vars ($thisUnit->Weapon))[0]->WeaponCategory != "Death"))){
+			(count((array)$thisUnit->Weapon) > 1 || (property_exists(((array)($thisUnit->Weapon))[0], "WeaponCategory") && ((array)($thisUnit->Weapon))[0]->WeaponCategory != "Death"))){
 			
 			
 			///////////
@@ -1965,6 +1981,7 @@
 		$terrain = 'none';
 		$strategic = 'none';
 		$description = 'unit';
+        $armyName = $unit->General->FactionName;
 		if (property_exists($unit, 'StrategicIconName')){
 			$strategic = $unit->StrategicIconName;
 		}
