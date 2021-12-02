@@ -1,0 +1,18 @@
+name: FAF UnitDB CI
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build and push Docker images
+        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags')
+        uses: docker/build-push-action@v1.1.1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: faforever/faf-unitdb
+          tag_with_ref: true
