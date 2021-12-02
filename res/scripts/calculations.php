@@ -41,13 +41,13 @@
         }
 
         
-        //    the rof is rounded to the nearest tick since the game runs in ticks.
+        //    the rof is rounded down to the nearest tick since the game runs in ticks. (If the units RoF is 0.8 it means it should fire every 1.25 seconds but it fires every 1.2 seconds)
         //    some weapons also have separate charge and reload times which results in them firing less often. yeah.
         //    in theory if your total MuzzleSalvoDelay is longer than the reload time your weapon waits for the reload time twice,
         //    but thats pretty much a bug so not taken into account here
         
         
-        $trueReload = max(0.1*floor((10 / $weapon["RateOfFire"]) + 0.5), 0.1); 
+        $trueReload = max(0.1*floor(10 / $weapon["RateOfFire"]), 0.1); 
         $trueReload = max(
                 ($weapon["RackSalvoChargeTime"] ?? 0) + ($weapon["RackSalvoReloadTime"] ?? 0) + 
                     ($weapon["MuzzleSalvoDelay"] ?? 0)*(($weapon["MuzzleSalvoSize"] ?? 1)-1), 
