@@ -94,7 +94,7 @@
 	
 		$version = $_GET['version'];
 		$urlVar = "UNITDB_FILES_API_URL_FORMAT";
-		$apiUrl = "https://api.faforever.com/featuredMods/0/files/%s";
+		$apiUrl = "http://faf-content/featuredMods/0/files/%s";
 		
 		if (getenv($urlVar) !== false){
 			$apiUrl = $_ENV[$urlVar];
