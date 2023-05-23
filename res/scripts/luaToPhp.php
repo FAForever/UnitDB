@@ -68,7 +68,7 @@ function trimval($str)
 */
 function array_id($str)
 {
-	$oStr = $str;
+  if (!$str) return "";
   $id1 = sscanf($str, "[%d]");  
   
   
@@ -158,11 +158,12 @@ function luaparser($lua, &$pos){
 
 function cleanArrays($array){
     $index = 0;
-    foreach($array as $key=>$element){
+    foreach($array as $key=>$element) {
         if (is_array($element)){
             cleanArrays($element);
         }
-        if ($key[0]==="%"){
+        
+        if (is_array($key) && $key[0] === "%"){
             $array[$index] = $element;
             unset($array[$key]);
             $index++;
