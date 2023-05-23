@@ -72,7 +72,7 @@ function array_id($str)
   $id1 = sscanf($str, "[%d]");  
   
   
-  if (strlen($id1[0])>0){
+  if ($id1[0] && strlen($id1[0])>0){
     return $id1[0];    
   }
   else

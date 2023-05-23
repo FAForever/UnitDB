@@ -1,4 +1,4 @@
-FROM richarvey/nginx-php-fpm:1.10.3
+FROM richarvey/nginx-php-fpm:3.1.4
 
 LABEL maintainer="rackover@racknet.noip.me"
 
