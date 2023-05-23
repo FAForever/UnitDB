@@ -3,6 +3,15 @@ function getFromGET($key, $default = null) {
     return isset($_GET[$key]) ? $_GET[$key] : $default;
 }
 
+function isDebug() {
+	return getFromGET('debug') || getenv('UNITDB_DEBUG');
+}
+
+function logDebug($msg) {
+	if (isDebug())
+		echo($msg."\n");
+}
+
 function setErrorHandling($debug) {
     if ($debug) {
         error_reporting(E_ALL);
@@ -27,7 +36,7 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) {
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
-$debug = getFromGET('debug');
+$debug = isDebug();
 setErrorHandling($debug);
 
 verifySecret('UNITDB_UPGRADE_SECRET');
@@ -110,8 +119,7 @@ file_put_contents("config/UPDATE.TMP", "If this file is present, either the data
 
 // STEP 0 : DOWNLOAD data IF NEED
 
-if ($debug)
-	echo '<p>STEP 0 ----- </p>'; ////////DEBUG
+logDebug('<p>STEP 0 ----- </p>');
 
 if (isset($_GET['version']) && $_GET['version'] != "local") {
 	$version = $_GET['version'];
@@ -127,24 +135,21 @@ if (isset($_GET['version']) && $_GET['version'] != "local") {
 
 //STEP 1 : UNZIP data
 
-if ($debug)
-	echo '<p>STEP 1 ----- </p>'; ////////DEBUG
+logDebug('<p>STEP 1 ----- </p>');
 
 $unzipper = new Unzipper($debug);
 $unzipper->unzipFiles($toExtract);
 
 //loc -->
 $failed = 0;
-if ($debug)
-	echo '<p>-> Opening loc Files... </p>'; ////////DEBUG
+logDebug('<p>-> Opening loc Files... </p>'); ////////DEBUG
 foreach ($toExtractLoc as $locArch) {
 
 	$zip = new ZipArchive;
 
 	if ($zip->open('' . ($locArch) . '') === TRUE) {
 
-		if ($debug)
-			echo '<p>-> Opened loc archive ' . $locArch . ' and found ' . ($zip->numFiles) . ' files. </p>'; ////////DEBUG
+		logDebug('<p>-> Opened loc archive ' . $locArch . ' and found ' . ($zip->numFiles) . ' files. </p>'); ////////DEBUG
 
 		for ($i = 0; $i < $zip->numFiles; $i++) {
 			$name = $zip->statIndex($i)['name'];
@@ -155,38 +160,31 @@ foreach ($toExtractLoc as $locArch) {
 
 		$zip->close();
 	} else {
-		if ($debug)
-			echo '<p>-> FAILED opening loc archive ' . $locArch . ' </p>'; ////////DEBUG
+		logDebug('<p>-> FAILED opening loc archive ' . $locArch . ' </p>'); ////////DEBUG
 		$failed++;
 	}
 }
 if ($failed > 0) {
-	if ($debug)
-		echo '<p> ->' . $failed . ' loc files could not be extracted. </p>'; ////////DEBUG
+	logDebug('<p> ->' . $failed . ' loc files could not be extracted. </p>'); ////////DEBUG
 }
 //endof
 
 //STEP 2 : MERGING FILES
-if ($debug)
-	echo '<p>------------ </p>'; ////////DEBUG
-if ($debug)
-	echo '<p>STEP 2 ----- </p>'; ////////DEBUG
+logDebug('<p>------------ </p>'); ////////DEBUG
+logDebug('<p>STEP 2 ----- </p>'); ////////DEBUG
 
 $idsUnitsList = [];
 $finalLangs = [];
 $dir = 'data/_temp/';
 if (is_dir($dir)) {
-	if ($debug)
-		echo '<p>-> Directory ' . $dir . ' found </p>'; ////////DEBUG
+	logDebug('<p>-> Directory ' . $dir . ' found </p>'); ////////DEBUG
 	foreach ($toExtract as $fileFolder) { //For every PAK to use, like units.3599.scd or units.nx2
 		$realPath = $dir . $fileFolder;
-		if ($debug)
-			echo '<p>-> Working on ' . $realPath . '</p>'; ////////DEBUG
+		logDebug('<p>-> Working on ' . $realPath . '</p>'); ////////DEBUG
 
 		$skipping = false;
 		if (!is_dir($realPath)) {
-			if ($debug)
-				echo '<p>--> No directory, SKIPPING </p>'; ////////DEBUG
+			logDebug('<p>--> No directory, SKIPPING </p>'); ////////DEBUG
 			continue;
 		}
 		$dirs = scandirVisible($realPath);
@@ -219,8 +217,7 @@ if (is_dir($dir)) {
 					$file = $thisUnitFile;
 				}
 
-				if ($debug)
-					echo '--> Adding unit ' . $thisUnit . ' from ' . $file . '...<br>';
+				logDebug('--> Adding unit ' . $thisUnit . ' from ' . $file . '...<br>');
 
 				if (file_exists($file)) {
 					$blueprint = file_get_contents($file);
@@ -236,23 +233,19 @@ if (is_dir($dir)) {
 					$thisSubfolderUnitsList[$thisUnit] = $blueprint; //Key is ID
 					$units++;
 				} else {
-					if ($debug)
-						echo '---> File not found!<br>';
+					logDebug('---> File not found!<br>');
 					$notFoundAfterX++;
 				}
 
 			}
-			if ($debug)
-				echo '<p>--> Found ' . $units . ' units in directory ' . $thisDirectory . '</p>'; ////////DEBUG
-			if ($debug)
-				echo '<p>--> Could not find ' . $notFoundAfterX . ' units</p>'; ////////DEBUG
+			logDebug('<p>--> Found ' . $units . ' units in directory ' . $thisDirectory . '</p>'); ////////DEBUG
+			logDebug('<p>--> Could not find ' . $notFoundAfterX . ' units</p>'); ////////DEBUG
 			$totalFound += $units;
 			$thisPakUnitsList = array_merge($thisPakUnitsList, $thisSubfolderUnitsList);
 		}
 
 		//$o = $idsUnitsList;
-		if ($debug)
-			echo '<p>-> Total units found for pak ' . $realPath . ' : ' . $totalFound . ' </p>'; ////////DEBUG
+		logDebug('<p>-> Total units found for pak ' . $realPath . ' : ' . $totalFound . ' </p>'); ////////DEBUG
 		$idsUnitsList = array_merge($idsUnitsList, $thisPakUnitsList);
 
 	}
@@ -262,12 +255,10 @@ if (is_dir($dir)) {
 	foreach ($toExtractLoc as $locFolder) {
 		$realPath = $dir . $locFolder;
 
-		if ($debug)
-			echo '<p>-> Working on loc ' . $realPath . '</p>'; ////////DEBUG
+		logDebug('<p>-> Working on loc ' . $realPath . '</p>'); ////////DEBUG
 
 		if (!is_dir($realPath)) {
-			if ($debug)
-				echo '<p>--> No directory, SKIPPING </p>'; ////////DEBUG
+			logDebug('<p>--> No directory, SKIPPING </p>'); ////////DEBUG
 			continue;
 		}
 
@@ -295,30 +286,25 @@ if (is_dir($dir)) {
 				}
 
 			}
-			if ($debug)
-				echo '<p>--> Found ' . $foundLines . ' locfiles in directory ' . $thisDirectory . '</p>'; ////////DEBUG
+			logDebug('<p>--> Found ' . $foundLines . ' locfiles in directory ' . $thisDirectory . '</p>'); ////////DEBUG
 			$totalLines += $foundLines;
 			$thisPakLangs = array_merge($thisPakLangs, $thisSubfolderLocList);
 		}
 
-		if ($debug)
-			echo '<p>-> Total files found for loc ' . $realPath . ' : ' . $totalLines . ' </p>'; ////////DEBUG
+		logDebug('<p>-> Total files found for loc ' . $realPath . ' : ' . $totalLines . ' </p>'); ////////DEBUG
 		$finalLangs = array_merge($finalLangs, $thisPakLangs);
 
 	}
 	//ENDOF
 } else {
-	if ($debug)
-		echo '<p>' . $dir . ' not found. EXITING !</p>'; ////////DEBUG
+	logDebug('<p>' . $dir . ' not found. EXITING !</p>'); ////////DEBUG
 	exit;
 }
 
 
 //STEP 3 : MAKING JSON
-if ($debug)
-	echo '<p>------------ </p>'; ////////DEBUG
-if ($debug)
-	echo '<p>STEP 3 ----- </p>'; ////////DEBUG
+logDebug('<p>------------ </p>'); ////////DEBUG
+logDebug('<p>STEP 3 ----- </p>'); ////////DEBUG
 
 $finalUnitList = [];
 foreach ($idsUnitsList as $thisUnit) {
@@ -329,19 +315,15 @@ file_put_contents('data/localization.json', json_encode($finalLangs));
 
 //STEP 4 : CLEANING UP
 
-if ($debug)
-	echo '<p>------------ </p>'; ////////DEBUG
-if ($debug)
-	echo '<p>STEP 4 ----- </p>'; ////////DEBUG
+logDebug('<p>------------ </p>'); ////////DEBUG
+logDebug('<p>STEP 4 ----- </p>'); ////////DEBUG
 
-if ($debug)
-	echo '<p>-> Beginning ' . $dir . ' cleanup </p>';
+logDebug('<p>-> Beginning ' . $dir . ' cleanup </p>');
 
 if (is_dir($dir)) {
 	$files = scandirVisible($dir);
 	foreach ($files as $unit) {
-		if ($debug)
-			echo '<p>-> Removing ' . $dir . $unit . ' </p>'; ////////DEBUG
+		logDebug('<p>-> Removing ' . $dir . $unit . ' </p>'); ////////DEBUG
 		rrmdir($dir . $unit);
 	}
 	;
@@ -349,11 +331,9 @@ if (is_dir($dir)) {
 
 unlink("config/UPDATE.TMP");
 
-if ($debug)
-	echo '<p>Unliked UPDATE.TMP - all operations complete.</p>'; ////////DEBUG
+logDebug('<p>Unliked UPDATE.TMP - all operations complete.</p>'); ////////DEBUG
 
-if ($debug)
-	echo '</div>'; ////////DEBUG
+logDebug('</div>'); ////////DEBUG
 
 
 ?>
