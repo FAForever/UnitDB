@@ -1,22 +1,40 @@
 <?php
-
-
-
-/// If this environment variable exist, it should be the same as the GET_ key provided
-$keyName = 'UNITDB_UPGRADE_SECRET';
-
-if (getenv($keyName) !== false) {
-	if ($_GET['token'] != $_ENV[$keyName]) {
-		header('HTTP/1.1 403 Forbidden');
-		exit;
-	}
+function getFromGET($key, $default = null) {
+    return isset($_GET[$key]) ? $_GET[$key] : $default;
 }
 
-/*
-	   ({)(\s*(\s*'(\w|\<|\>|_| )*',*)+),\s*(})
-   
-   */
-require('res/scripts/luaToPhp.php');
+function setErrorHandling($debug) {
+    if ($debug) {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+        echo '<div style="color:orange;background-color:#111111;font-family:Consolas;padding:8px;">';
+    } else {
+        error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE);
+    }
+}
+
+function verifySecret($keyName) {
+    if (getenv($keyName) !== false && getFromGET('token') !== $_ENV[$keyName]) {
+        http_response_code(403);
+        exit;
+    }
+}
+
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    if (!(error_reporting() & $errno)) {
+        return;
+    }
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
+$debug = getFromGET('debug');
+setErrorHandling($debug);
+
+verifySecret('UNITDB_UPGRADE_SECRET');
+
+require(__DIR__ . '/res/scripts/luaToPhp.php');
+require(__DIR__ . '/include/FileDownloader.php');
+require(__DIR__ . '/include/Unzipper.php');
 
 function rrmdir($src)
 {
@@ -75,7 +93,6 @@ function locfileToPhp($locContent)
 	return $finalLoc;
 }
 
-
 //GET EXTRACTION INFO AND PREPARE FALLBACK
 $toExtract = json_decode(file_get_contents('config/datafiles.json'));
 $toExtractLoc = json_decode(file_get_contents('config/locfiles.json'));
@@ -95,112 +112,26 @@ file_put_contents("config/UPDATE.TMP", "If this file is present, either the data
 
 if ($debug)
 	echo '<p>STEP 0 ----- </p>'; ////////DEBUG
+
 if (isset($_GET['version']) && $_GET['version'] != "local") {
-
 	$version = $_GET['version'];
-	$urlVar = "UNITDB_FILES_API_URL_FORMAT";
-	$apiUrl = "https://api.faforever.com/featuredMods/0/files/%s";
 
-	if (getenv($urlVar) !== false) {
-		$apiUrl = $_ENV[$urlVar];
-	}
+	// get from env otherwise from GET
+	$overrideApiUrl = getenv('UNITDB_OVERRIDE_API');
+	if ($overrideApiUrl === false)
+		$overrideApiUrl = isset($_GET['overrideApiUrl']) ? $_GET['overrideApiUrl'] : null;
 
-	$url = sprintf($apiUrl, $version);
-
-	if ($debug) {
-		echo "<p>Using url " . $url . "</p>";
-	}
-
-
-	$neededFiles = array(
-		"units.nx2" => "data/gamedata/",
-		"projectiles.nx2" => "data/gamedata/",
-		"loc.nx2" => "data/loc/"
-	);
-
-	$jsonString = file_get_contents($url);
-	$json = json_decode($jsonString, true);
-	$files = $json["data"];
-
-	foreach ($files as $thisFile) {
-		$name = $thisFile["attributes"]["name"];
-		$md5 = $thisFile["attributes"]["md5"];
-		$url = $thisFile["attributes"]["url"];
-		$neededFilesKeys = array_keys($neededFiles);
-		if (in_array($name, $neededFilesKeys)) {
-			$path = $neededFiles[$name];
-			if ($debug)
-				echo "Downloading " . $name . " from " . $url . " to " . $path . " [" . $md5 . "]<br>";
-			if (file_exists($path . $name))
-				unlink($path . $name);
-			if (!file_exists($path))
-				mkdir($path, 0777, true);
-			file_put_contents($path . $name, fopen($url, 'r'));
-
-			$sum = md5_file($path . $name);
-			if ($sum != $md5) {
-				if ($debug)
-					echo "-> MD5 MISMATCH !<br>";
-				if ($debug)
-					echo "--> Exiting.<br>";
-				exit;
-			} else {
-				if ($debug)
-					echo "=> MD5 OK !<br>";
-			}
-		}
-	}
+	$downloader = new FileDownloader($debug, $overrideApiUrl);
+	$downloader->downloadFiles($_GET['version']);
 }
-
-
 
 //STEP 1 : UNZIP data
 
 if ($debug)
 	echo '<p>STEP 1 ----- </p>'; ////////DEBUG
 
-$failed = 0;
-for ($h = 0; $h < sizeOf($toExtract); $h++) {
-	$zip = new ZipArchive;
-	if ($zip->open('' . ($toExtract[$h]) . '') === TRUE) {
-		if ($debug)
-			echo '<p>-> Opened archive ' . $toExtract[$h] . ' and found ' . ($zip->numFiles) . ' files. </p>'; ////////DEBUG
-
-		for ($i = 0; $i < $zip->numFiles; $i++) {
-			$name = ($zip->statIndex($i)['name']);
-			if ($debug)
-				echo '<p>--> Found file ' . $name . '</p>'; ////////DEBUG
-			if (strpos(basename($name), '.bp') !== false) {
-				if ($debug)
-					echo '<p>---> Extracting ' . $name . ' to data/_temp/' . $toExtract[$h] . '/ ...</p>'; ////////DEBUG
-				$success = $zip->extractTo('data/_temp/' . $toExtract[$h] . '/', ($name)); //Ex : extracts "units.scd.3599" to /data/gamedata/_temp/units.scd.3599
-
-				// Let's assure the unit blueprint has the right casing
-				$basename = basename('data/_temp/' . $toExtract[$h] . '/' . $name);
-				$path = str_replace($basename, "", 'data/_temp/' . $toExtract[$h] . '/' . $name);
-				if ($debug)
-					echo '<p>---> Renaming ' . $path . $basename . " to " . $path . strtoupper($basename) . '</p>'; ////////DEBUG
-				rename($path . $basename, $path . strtoupper($basename));
-
-				if (!$success) {
-					if ($debug)
-						echo '<p>----> Extraction FAILED !</p>'; ////////DEBUG
-					if ($debug)
-						echo '<p>----> Error : ' . error_get_last()['message'] . '</p>'; ////////DEBUG
-				}
-			}
-		}
-		$zip->close();
-	} else {
-		if ($debug)
-			echo '<p>-> FAILED opening archive ' . $toExtract[$h] . ' </p>'; ////////DEBUG
-		$failed++;
-	}
-}
-if ($failed > 0) {
-	if ($debug)
-		echo '<p> -> ' . $failed . ' files could not be extracted. </p>'; ////////DEBUG
-}
+$unzipper = new Unzipper($debug);
+$unzipper->unzipFiles($toExtract);
 
 //loc -->
 $failed = 0;
