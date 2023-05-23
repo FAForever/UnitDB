@@ -455,6 +455,7 @@
 			justify-content:space-between;
 			flex-direction: column;" >';
 			
+		
 		$categories = array_merge(array_flip($techOrder), $categories);
 			
 		/// For each tech as a row, display one column per army
@@ -2028,10 +2029,9 @@
 	}
 	
 	function getTech($unit){
-			
 		$unitTech = "";
 		$unitCat = $unit->Categories;
-			
+
 		if (in_array ('TECH1', $unitCat)){
 			$unitTech = "T1 ";
 		}

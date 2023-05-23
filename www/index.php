@@ -1,4 +1,13 @@
 <?php 
+	ini_set('display_errors', 1);
+	error_reporting(E_ALL & ~E_NOTICE);
+	set_error_handler(function($errno, $errstr, $errfile, $errline) {
+		if (!(error_reporting() & $errno)) {
+			return;
+		}
+		throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+	});
+
 
 	include('./res/scripts/functions.php');
 	
