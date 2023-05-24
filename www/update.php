@@ -180,7 +180,7 @@ $gamedataFolder = path($dataFolder, 'gamedata');
 $locFolder = path($dataFolder, 'loc');
 deleteFolder($dataFolder);
 deleteFolder($locFolder);
-//deleteFolder($repoDir);
+deleteFolder($repoDir);
 
 $git = new Git($repoUrl);
 $git->clone($repoDir, $version);
