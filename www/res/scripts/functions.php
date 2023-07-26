@@ -1005,7 +1005,7 @@
 										Missile ID/BP
 									</div>
 									<div class="littleInfoVar"  style="text-align:center;margin:0px;"  >
-										<a class="blueprintLink externalBlueprint" href="https://github.com/FAForever/fa/tree/develop/projectiles/'.($projectileId).'">
+										<a class="blueprintLink externalBlueprint" href="https://github.com/FAForever/fa/blob/deploy/fafdevelop/projectiles/'.($projectileId).'">
 											'.($projectileId).'
 										</a>
 									</div>
@@ -2005,7 +2005,7 @@
 						<p style="
 								padding-left:15px;
 								margin:0px;">
-							<a href=" https://github.com/FAForever/fa/blob/develop/units/'.($unit->Id).'/'.($unit->Id).'_unit.bp"
+							<a href="https://github.com/FAForever/fa/blob/deploy/fafdevelop/units/'.($unit->Id).'/'.($unit->Id).'_unit.bp"
 								class="blueprintLink" style="color:'.(getFactionColor($unit->General->FactionName, 'bright')).';">
 								'.strtoupper($unit->Id).'
 							</a>
