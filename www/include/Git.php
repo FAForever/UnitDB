@@ -1,4 +1,5 @@
 <?php
+
 class Git
 {
     private $repositoryUrl;
@@ -10,22 +11,28 @@ class Git
 
     public function clone($destinationDirectory, $branch = 'master', $sparseFolders = ['loc', 'projectiles', 'units'])
     {
-        if ($sparseFolders) {
-            $this->execute("git clone --filter=blob:none --depth 1 --sparse {$this->repositoryUrl} --branch $branch {$destinationDirectory}");
+        // Escape arguments to ensure they're safe for shell execution
+        $escRepo = escapeshellarg($this->repositoryUrl);
+        $escDestDir = escapeshellarg($destinationDirectory);
+        $escBranch = escapeshellarg($branch);
 
-            foreach ($sparseFolders as $folder){
-                $this->execute("cd $destinationDirectory && git sparse-checkout add $folder");
+        if ($sparseFolders) {
+            $this->execute("git clone --filter=blob:none --depth 1 --sparse {$escRepo} --branch {$escBranch} {$escDestDir}");
+
+            foreach ($sparseFolders as $folder) {
+                $escFolder = escapeshellarg($folder);
+                $this->execute("cd {$escDestDir} && git sparse-checkout add {$escFolder}");
             }
+        } else {
+            $this->execute("git clone {$escRepo} {$escDestDir}");
         }
-        else
-            $this->execute("git clone {$this->repositoryUrl} {$destinationDirectory}");
     }
 
     private function execute($command)
     {
         $output = shell_exec($command);
-
         return $output;
     }
 }
+
 ?>
