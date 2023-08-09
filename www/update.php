@@ -11,7 +11,7 @@ function getFromGET($key, $default = null) {
 }
 
 function isDebug() {
-return getFromGET('debug') || getenv('UNITDB_DEBUG') || true;
+return getFromGET('debug') || getenv('UNITDB_DEBUG');
 }
 
 function logDebug($msg) {
