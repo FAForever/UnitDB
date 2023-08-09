@@ -163,7 +163,7 @@ function cleanArrays($array){
             cleanArrays($element);
         }
         
-        if (is_array($key) && $key[0] === "%"){
+        if (is_string($key) && $key[0] === "%"){
             $array[$index] = $element;
             unset($array[$key]);
             $index++;

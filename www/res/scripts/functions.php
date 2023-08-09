@@ -1732,6 +1732,10 @@
 		if (!property_exists($thisUnit->Defense, "RegenRate")){
 			$thisUnit->Defense->RegenRate = 0;
 		}
+
+		if (!property_exists($thisUnit, "StrategicIconName")){
+			$thisUnit->StrategicIconName = "unknown";
+		}
 		
 		/// Filling up basic unit information. **EVERY BLUEPRINT** normally has these infos.
 		return array(
