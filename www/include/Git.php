@@ -1,5 +1,7 @@
 <?php
 
+// Improved error handling. Detect when commands fail. Exit script on failure.
+// Removed use of shell_exec (does not reliably detect command failures).
 class Git
 {
     private $repositoryUrl;
@@ -17,20 +19,29 @@ class Git
         $escBranch = escapeshellarg($branch);
 
         if ($sparseFolders) {
-            $this->execute("git clone --filter=blob:none --depth 1 --sparse {$escRepo} --branch {$escBranch} {$escDestDir}");
+            $out = $this->execute("git clone --filter=blob:none --depth 1 --sparse {$escRepo} --branch {$escBranch} {$escDestDir}");
+            print_r($out);
 
             foreach ($sparseFolders as $folder) {
                 $escFolder = escapeshellarg($folder);
-                $this->execute("cd {$escDestDir} && git sparse-checkout add {$escFolder}");
+                $out = $this->execute("cd {$escDestDir} && git sparse-checkout add {$escFolder}");
+                print_r($out);
             }
         } else {
-            $this->execute("git clone {$escRepo} {$escDestDir}");
+            $out = $this->execute("git clone {$escRepo} {$escDestDir}");
+            print_r($out);
         }
     }
 
     private function execute($command)
     {
-        $output = shell_exec($command);
+        $output = null;
+        $retval = null;
+        logDebug($command);
+        exec($command, $output, $retval);
+        logDebug("Returned with status $retval and output: \n");
+        if ($retval != 0) exit ($retval);
+
         return $output;
     }
 }
