@@ -183,7 +183,7 @@ if (!$version)
 
 $repoUrl = "https://github.com/FAForever/fa";
 
-// Changed to .tmp to tmp for better Windows compatibility
+// No leading period for better Windows compatibility
 $repoDir = path("tmp/fa");
 $dataFolder = path("tmp/data");
 
