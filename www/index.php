@@ -1,4 +1,7 @@
 <?php 
+// PHP Issue - There is an issue under PHP 8.3.1. With XDebug enabled, it will cause 100% CPU Usage
+// Disable XDebug, or use an earlier version of PHP - PV
+
 	ini_set('display_errors', 1);
 	error_reporting(E_ALL & ~E_NOTICE);
 	set_error_handler(function($errno, $errstr, $errfile, $errline) {

@@ -148,6 +148,14 @@ function prepareForConversion($string_bp)
 	$string_bp = str_replace("'", '"', $string_bp);
 	$string_bp = str_replace('Sound', '', $string_bp);
 
+/// Deals with values enclosed by {} being on the same line. MakePHPArray() will not properly convert such lines.
+/// Example: Intel = { VisionRadius = 32 },
+
+///    After trying a million different syntaxes in a PHP Sandbox, this seems to work! Using the
+///    double quotes is key to getting the newlines in there. - PV
+///    Breaks up any line that has { } on the same line with a property
+       $string_bp = preg_replace("/{(.*)}\,/", "{\n$1\n},", $string_bp);
+
 	return $string_bp;
 }
 
@@ -174,16 +182,24 @@ if (!$version)
   $version = "master";
 
 $repoUrl = "https://github.com/FAForever/fa";
-$repoDir = path(".tmp/fa");
-$dataFolder = path(".tmp/data");
+
+// Changed to .tmp to tmp for better Windows compatibility
+$repoDir = path("tmp/fa");
+$dataFolder = path("tmp/data");
+
 $gamedataFolder = path($dataFolder, 'gamedata');
 $locFolder = path($dataFolder, 'loc');
-deleteFolder($dataFolder);
 deleteFolder($locFolder);
-deleteFolder($repoDir);
+deleteFolder($dataFolder);
 
+/* Start of github dependent section */
+// Normal operation is to pull files from GitHub using git commands.
+// If git commands don't work in your environment, or for testing purposes, comment out the next 3 lines.
+// You can then manually place & unzip units.nx2, projectiles.nx2, loc.nx2 into tmp/fa ($repoDir)
+deleteFolder($repoDir);
 $git = new Git($repoUrl);
 $git->clone($repoDir, $version);
+/* End of github dependent section */
 
 copyFolder($repoDir . "/projectiles", path($dataFolder, 'projectiles'));
 copyFolder($repoDir . "/units", path($dataFolder, 'units'));
@@ -193,33 +209,40 @@ unzipFiles("data/gamedata/units.scd.3599", path($dataFolder, 'units.3599'));
 unzipFiles("data/loc/loc_US.scd.3599", path($locFolder, 'loc_US.3599'));
 unzipFiles("data/loc/loc.nx2", path($locFolder, 'loc.nx2'));
 
-$folders = [ 'projectiles.3599', 'units.3599', 'projectiles', 'units', 'loc_US.3599', 'loc.nx2', 'loc' ];
+$folders = [ 'projectiles.3599', 'units.3599', 'projectiles', 'units', 'loc\\loc_US.3599', 'loc\\loc.nx2'];
 $valid_types = [ 'unit.bp', 'proj.bp', 'db.lua' ];
 
 $blueprints = array();
 $bpFiles = array();
 $locFiles = array();
 
-$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dataFolder));
-foreach ($iterator as $file) {
-  if ($file->isDir()) continue;
-  $filename = $file->getFilename();
-  if ($filename == '.' || $filename == '..') continue;
-  if (strpos($filename, '_') == false) continue;
-  list($blueprintId, $type) = explode('_', $filename);
-  if (!in_array($type, $valid_types)) continue;
+// It is >critical< that the folders are read in the order specified by the $folders variable.
+// The .3599 folders must be read first, otherwise old values will appear in the results.
 
-  $path = $file->getPathname();
+foreach ($folders as $thisFolder) {
+	$thisPath = $dataFolder."\\".$thisFolder;
 
-  if ($type == 'db.lua') {
-    // get parent folder of file
-    $parentFolder = basename(dirname($path));
-    $lang = strtoupper($parentFolder);
-    $locFiles[$lang] = $path;
-  }
-  else {
-    $bpFiles[$blueprintId] = $path;
-  }
+	$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($thisPath));
+	foreach ($iterator as $file) {
+	  if ($file->isDir()) continue;
+	  $filename = $file->getFilename();
+	  if ($filename == '.' || $filename == '..') continue;
+	  if (strpos($filename, '_') == false) continue;
+	  list($blueprintId, $type) = explode('_', $filename);
+	  if (!in_array($type, $valid_types)) continue;
+
+	  $path = $file->getPathname();
+
+	  if ($type == 'db.lua') {
+	    // get parent folder of file
+	    $parentFolder = basename(dirname($path));
+	    $lang = strtoupper($parentFolder);
+	    $locFiles[$lang] = $path;
+	  }
+	  else {
+	    $bpFiles[$blueprintId] = $path;
+	  }
+	}
 }
 
 $blueprint = array();
