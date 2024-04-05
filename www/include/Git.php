@@ -1,7 +1,6 @@
 <?php
 
-// Improved error handling. Detect when commands fail. Exit script on failure.
-// Removed use of shell_exec (does not reliably detect command failures).
+// Wrapper for Git, exits on git failures.
 class Git
 {
     private $repositoryUrl;
@@ -20,12 +19,10 @@ class Git
 
         if ($sparseFolders) {
             $out = $this->execute("git clone --filter=blob:none --depth 1 --sparse {$escRepo} --branch {$escBranch} {$escDestDir}");
-            print_r($out);
 
             foreach ($sparseFolders as $folder) {
                 $escFolder = escapeshellarg($folder);
                 $out = $this->execute("cd {$escDestDir} && git sparse-checkout add {$escFolder}");
-                print_r($out);
             }
         } else {
             $out = $this->execute("git clone {$escRepo} {$escDestDir}");
@@ -39,8 +36,12 @@ class Git
         $retval = null;
         logDebug($command);
         exec($command, $output, $retval);
-        logDebug("Returned with status $retval and output: \n");
-        if ($retval != 0) exit ($retval);
+
+        if ($retval != 0) {
+            logDebug("Returned with status $retval and output: \n");
+            print_r($output);
+            exit ($retval);
+        }
 
         return $output;
     }

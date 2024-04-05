@@ -1,23 +1,25 @@
 <?php
 
 //	When debugging, uncomment the following to display errors.
-
+/*
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
+*/
 
 include("calculations.php");
-		
-	///////////////////////////////////////
-	///									///
-	///	Functions follow.      			///
-	///									///
-	///////////////////////////////////////
-	
-function print_r2($val){
-        echo '<pre>';
-        print_r($val);
-        echo  '</pre>';
+
+///////////////////////////////////////
+///									///
+///	Functions follow.      			///
+///									///
+///////////////////////////////////////
+
+// Formats output of standard print_r function to make it display on a web page.
+function print_r_web($val)
+{
+	echo '<pre>';
+	print_r($val);
+	echo  '</pre>';
 }
 
 //    For some values, I want to see the decimals, unless they don't exist.

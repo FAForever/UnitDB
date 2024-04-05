@@ -43,10 +43,7 @@
         
         $weapon = arrayCastRecursive($stdClassWeapon); // StdClass are a PAIN to use in PHP
         
-        // Hardcoded exceptions - Removed arties, handled by Fragmentation code below
-//            'UEL0103', // lobo
-//            'XSL0103', // zthuee
-
+        // Hardcoded exceptions
         $specials = [
             'DAA0206', // mercy
             'XAA0306' // solace
@@ -80,22 +77,23 @@
         );
 
 /*
-	Previous code for calculating missile/projectile count was re-written to improve accuracy and moved to calculateFireCycle.
+	Code for calculating missile/projectile count should only be done in calculateFireCycle.
 	We don't want to calculate fire cycles in two places. Just use the value returned from that function.
 */
         $trueSalvoSize = $shots;
 
-        /// Added for Salvation
-        if ($unitID == "XAB2307") {
-            /// Salvation uses a shell that fragments into 6 shells, which then fragments into 6 more.  I'm not going to try to code that. Just multiply by 36.
-            $trueSalvoSize = $trueSalvoSize * 36;
-        }
-
         $trueDamage = $weapon["Damage"] * ($weapon["DoTPulses"] ?? 1) + ($weapon["InitialDamage"] ?? 0);
 
-        /// Added for weapons with fragmentation shells (Lobo, Zthuee).
+        /// For weapons with fragmentation shells (Lobo, Zthuee, Salvation).
         if (isset($Projectile) && property_exists($Projectile->Physics, 'Fragments')) {
             $trueSalvoSize = $trueSalvoSize * $Projectile->Physics->Fragments;
+            /// Exception for Salvation
+            if ($unitID == "XAB2307") {
+                /// Salvation uses a shell that fragments into 6 shells, which then fragments into 6 more.
+                /// Only first fragmentation is accounted for above.  Hard code the 2nd one by multiplying by 6.
+                $trueSalvoSize = $trueSalvoSize * 6;
+            }
+
         }
 
         // beam weapons are a thing and do their own thing. yeah good luck working out that.
