@@ -1,19 +1,38 @@
 <?php
-	
-	//	When debugging, uncomment the following to display errors.
-	/*
-		error_reporting(E_ALL);
-		ini_set('display_errors', 1);
-	*/
-    
-    include("calculations.php");
-		
-	///////////////////////////////////////
-	///									///
-	///	Functions follow.      			///
-	///									///
-	///////////////////////////////////////
-	
+
+//	When debugging, uncomment the following to display errors.
+/*
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+*/
+
+include("calculations.php");
+
+///////////////////////////////////////
+///									///
+///	Functions follow.      			///
+///									///
+///////////////////////////////////////
+
+// Formats output of standard print_r function to make it display on a web page.
+function print_r_web($val)
+{
+	echo '<pre>';
+	print_r($val);
+	echo  '</pre>';
+}
+
+//    For some values, I want to see the decimals, unless they don't exist.
+function number_format_unlimited_precision($number, $decimal = '.')
+{
+	$broken_number = explode($decimal, $number);
+	if (count($broken_number) == 2) {
+		return number_format($broken_number[0]) . $decimal . $broken_number[1];
+	} else {
+		return number_format($broken_number[0]);
+	}
+}
+
 	function categorizeUnitData($categoriesOrder, $userSettings, $dataUnits){
 		
 		$finalData = array();
@@ -26,16 +45,17 @@
 			
 			/// This chunk of code can be used to skip units lacking an icon, a preview, or basic general information.
 			/// Useful to avoid displaying debug units.
-			/*
+			/// Filter is >necessary<, in fact, because some of these units can cause the script to fail.
+			/// Added filter to prevent units that don't have a 'faction'.
 			if (!property_exists($item, 'StrategicIconName') ||
 				!property_exists($item, 'General') ||
-				!property_exists($item->General, 'Icon')){
+				!property_exists($item->General, 'Icon') ||
+				!property_exists($item->General, 'FactionName')) {
 				continue;
 			}
-			*/
 			
 			/// Formatting the Faction name to ensure it has good casing : Aeon, Cybran, Seraphim, UEF, Nomads
-			$faction = formatFaction($item->General->FactionName);						
+			$faction = formatFaction($item->General->FactionName);
 			
 			/// Adding the army to the list, given the user said he wanted to see it.
 			if (!in_array($faction, $armies) && in_array($faction, $userSettings['showArmies'])){
@@ -501,10 +521,11 @@
 			/// Checks every unit in the $data to see which ones correspond to the right buildable category
 			/// and populates the $buildable with them
 			foreach($dataUnits as $unit){
-				foreach($thisUnit->Economy->BuildableCategory as $buildableCategory){
+			/// (array) Type cast needed in case BuildableCategory is only a string (for PHP 8)
+				foreach((array)$thisUnit->Economy->BuildableCategory as $buildableCategory){
 					$buildableRequirements = explode(' ', $buildableCategory);
 					$canBuild = true;
-					foreach($buildableRequirements as $requirement){
+					foreach((array)$buildableRequirements as $requirement){
 						if (!in_array($requirement, $unit->Categories) && strtoupper($requirement) != strtoupper($unit->Id)){
 							$canBuild = false;
 						}
@@ -874,21 +895,48 @@
 							'.($thisWeapon->DamageType).'
 						</div>
 					</div>';
-			}	
+			}
+
+
+		/// If the weapon uses a missile, and we have this missile in the $data, lets display more information about the missile
+		///  We need to find the missile/projectile before the DPS calculation, in case it uses a fragmentation weapon.
+			$WeaponProjectile = NULL;
+
+			if (property_exists($thisWeapon, 'ProjectileId')) {
+
+				$foundArr = [];
+				$found = preg_match('~(?<=projectiles\/).*(?=\/)~', $thisWeapon->ProjectileId, $foundArr);
+
+				if ($found) {
+
+					$projectileId = $foundArr[0];
+					/// There has got to be a better way to do this, right?  Should make an array for projectiles at some future point.
+					if (strlen($projectileId) > 0) {
+						/// searching the needle in the haystack...
+						foreach ($dataMissiles as $thisMissile) {
+							if (strtoupper($thisMissile->Id) == strtoupper($projectileId)) {
+								// found it !
+								$WeaponProjectile = $thisMissile;
+								break;
+							}
+						}
+					}
+				}
+			}
             
-            /// Approximate DPS
+			/// Approximate DPS
 			if (property_exists($thisWeapon, 'Damage') &&
 				$thisWeapon->Damage > 0 &&
-                $thisWeapon->WeaponCategory != "Death"){ 
+		                $thisWeapon->WeaponCategory != "Death"){ 
 				echo '<div class="flexColumns weaponLine" style="background-color:'.getFactionColor($info['Faction'], 'bright').';">
 						<div class="littleInfo" style="color:'.getFactionColor($info['Faction'], 'dark').';">
 							<b>Approximate DPS</b>
 						</div>
 						<div class="littleInfoVar" style="color:'.getFactionColor($info['Faction'], 'dark').';">
-							<b>'.format(calculateDps($thisWeapon, $info['Id'])).'</b>
+							<b>'.format(calculateDps($thisWeapon, $info['Id'], $WeaponProjectile)).'</b>
 						</div>
                     </div>';
-            }
+			}
 			
 			/// Specific Damage styled display if the weapon has damage
 			if (property_exists($thisWeapon, 'Damage') &&
@@ -931,7 +979,7 @@
 							Fire cycle
 						</div>
 						<div class="littleInfoVar" >
-							'.calculateFireCycle($thisWeapon).' projectiles / shot
+							'.calculateFireCycle($thisWeapon, $info['Id']).' projectiles / shot
 						</div>
 					</div>';
 			}		
@@ -976,75 +1024,55 @@
 							Nuke damage
 						</div>
 						<div class="littleInfoVar" >
-							'.format($thisWeapon->NukeOuterRingDamage).'-'.format($thisWeapon->NukeInnerRingDamage).'
+							'.format($thisWeapon->NukeInnerRingDamage).'-'.format($thisWeapon->NukeOuterRingDamage).'
 						</div>
 					</div>';
 				
 			}
-			
-			/// If the weapon uses a missile, and we have this missile in the $data, lets display more information about the missile
-			if (property_exists($thisWeapon, 'ProjectileId')){
-				
-				$foundArr = [];
-				$found = preg_match('~(?<=projectiles\/).*(?=\/)~', $thisWeapon->ProjectileId, $foundArr);
-				
-				if ($found){
-					
-					$projectileId = $foundArr[0];
-					
-					if (strlen($projectileId) > 0){
-						/// searching the needle in the haystack...
-						foreach($dataMissiles as $thisMissile){
-							if ($thisMissile->Id == strtoupper($projectileId)){
-								// found it !
-								
-								/// Display the blueprint + github link
-									echo '
-								<div class="flexColumns weaponLine" style="margin-bottom:4px;">
-									<div class="littleInfo" style="text-align:center;" >
-										Missile ID/BP
-									</div>
-									<div class="littleInfoVar"  style="text-align:center;margin:0px;"  >
-										<a class="blueprintLink externalBlueprint" href="https://github.com/FAForever/fa/blob/deploy/fafdevelop/projectiles/'.($projectileId).'">
-											'.($projectileId).'
-										</a>
-									</div>
-								</div>';
-								
-								/// Display cost if any
-								if (property_exists($thisMissile, 'Economy')){
-									$eco = $thisMissile->Economy;
-									echo '
-								<div class="flexRows weaponLine" style="margin-bottom:4px;">
-									<div class="littleInfo" style="text-align:center;" >
-										Missile Cost
-									</div>
-									<div class="littleInfoVar"  style="text-align:center;margin:0px;"  >
-										<div class="flexColumns" style="color:black;" style="text-align:center;" >
-											<div class="energyCost bubbleInfo">
-												<img alt="nrg" style="vertical-align:top;" src="res/img/icons/energy.png"> '.format($eco->BuildCostEnergy).'
-												<span class="bubbleText">Energy cost</span>
-											</div>
-											<div class="massCost bubbleInfo">
-												<img alt="mss" style="vertical-align:top;" src="res/img/icons/mass.png"> '.format($eco->BuildCostMass).'
-												<span class="bubbleText">Mass cost</span>
-											</div>
-											<div class="buildTimeCost bubbleInfo">
-												<img alt="tim" style="vertical-align:top;" src="res/img/icons/time.png"> '.format($eco->BuildTime).'
-												<span class="bubbleText">Build time</span>
-											</div>
-										</div>
-									</div>
-								</div>';
-								}
-								break;
-							}
-						}
-						
-					}
-				}
+
+
+		/// Display the blueprint + github link
+			if (isset($projectileId)) {
+				echo '
+					<div class="flexColumns weaponLine" style="margin-bottom:4px;">
+						<div class="littleInfo" style="text-align:center;" >
+							Missile ID/BP
+						</div>
+						<div class="littleInfoVar"  style="text-align:center;margin:0px;"  >
+							<a class="blueprintLink externalBlueprint" href="https://github.com/FAForever/fa/blob/deploy/fafdevelop/projectiles/' . ($projectileId) . '">
+								' . ($projectileId) . '
+							</a>
+						</div>
+					</div>';
 			}
 			
+			/// Display cost if any
+			if (isset($WeaponProjectile) && property_exists($WeaponProjectile, 'Economy')){
+				$eco = $WeaponProjectile->Economy;
+				echo '
+			<div class="flexRows weaponLine" style="margin-bottom:4px;">
+				<div class="littleInfo" style="text-align:center;" >
+					Missile Cost
+				</div>
+				<div class="littleInfoVar"  style="text-align:center;margin:0px;"  >
+					<div class="flexColumns" style="color:black;" style="text-align:center;" >
+						<div class="energyCost bubbleInfo">
+							<img alt="nrg" style="vertical-align:top;" src="res/img/icons/energy.png"> '.format($eco->BuildCostEnergy).'
+							<span class="bubbleText">Energy cost</span>
+						</div>
+						<div class="massCost bubbleInfo">
+							<img alt="mss" style="vertical-align:top;" src="res/img/icons/mass.png"> '.format($eco->BuildCostMass).'
+							<span class="bubbleText">Mass cost</span>
+						</div>
+						<div class="buildTimeCost bubbleInfo">
+							<img alt="tim" style="vertical-align:top;" src="res/img/icons/time.png"> '.format($eco->BuildTime).'
+							<span class="bubbleText">Build time</span>
+						</div>
+					</div>
+				</div>
+			</div>';
+			}
+
 			/// Displaying every generic property now
 			foreach($propertiesToDisplayGreaterThanZero as $thisProp){
 				if (property_exists($thisWeapon, $thisProp) &&
@@ -1054,7 +1082,7 @@
 								'.caseFormat($thisProp).'
 							</div>
 							<div class="littleInfoVar" >
-								'.format($thisWeapon->$thisProp).'
+								'.number_format_unlimited_precision($thisWeapon->$thisProp).'
 							</div>
 						</div>';
 				}
@@ -1067,7 +1095,7 @@
 								'.caseFormat($thisProp).'
 							</div>
 							<div class="littleInfoVar" >
-								'.format($thisWeapon->$thisProp).'
+								'.number_format_unlimited_precision($thisWeapon->$thisProp).'
 							</div>
 						</div>';
 				}
@@ -1079,7 +1107,7 @@
 								'.caseFormat($thisProp).'
 							</div>
 							<div class="littleInfoVar" >
-								'.format($thisWeapon->$thisProp).'
+								'.number_format_unlimited_precision($thisWeapon->$thisProp).'
 							</div>
 						</div>';
 				}
@@ -1393,6 +1421,7 @@
 						color:'.getFactionColor($info['Faction'], 'bright').';">
 						Vision : '.($intel->VisionRadius).'
 					</div>';
+
 			if (property_exists($intel, 'RadarRadius')) echo '
 					<div class="radarRadius"
 						style="
@@ -1419,7 +1448,8 @@
 				// or it has omni or watervisionradius
 				(property_exists($thisUnit, "Intel") && (property_exists($thisUnit->Intel, "WaterVisionRadius") || property_exists($thisUnit->Intel, "OmniRadius")))
 				
-			   ){
+			   )
+			{
 				   
 				echo '
 				<div style="color:'.getFactionColor($info['Faction'], 'bright').';">';
@@ -1462,7 +1492,7 @@
 						"OmniRadius"
 						);
 				
-				foreach($thisUnit->Intel as $key=>$value){
+				foreach((array)$thisUnit->Intel as $key=>$value){
 					if (!in_array($key, $whitelist)){
 						continue;
 					}
@@ -1503,7 +1533,7 @@
 				<div class="flexWrap" style="padding-right:10px;padding-left:10px;">
 					';
 					
-					foreach($abilities as $thisAb){
+					foreach((array)$abilities as $thisAb){
 						
 						echo '<div style="font-weight:bold;
 											text-shadow: 1px 1px black;

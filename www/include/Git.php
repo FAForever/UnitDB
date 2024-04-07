@@ -1,5 +1,6 @@
 <?php
 
+// Wrapper for Git, exits on git failures.
 class Git
 {
     private $repositoryUrl;
@@ -17,20 +18,31 @@ class Git
         $escBranch = escapeshellarg($branch);
 
         if ($sparseFolders) {
-            $this->execute("git clone --filter=blob:none --depth 1 --sparse {$escRepo} --branch {$escBranch} {$escDestDir}");
+            $out = $this->execute("git clone --filter=blob:none --depth 1 --sparse {$escRepo} --branch {$escBranch} {$escDestDir}");
 
             foreach ($sparseFolders as $folder) {
                 $escFolder = escapeshellarg($folder);
-                $this->execute("cd {$escDestDir} && git sparse-checkout add {$escFolder}");
+                $out = $this->execute("cd {$escDestDir} && git sparse-checkout add {$escFolder}");
             }
         } else {
-            $this->execute("git clone {$escRepo} {$escDestDir}");
+            $out = $this->execute("git clone {$escRepo} {$escDestDir}");
+            print_r($out);
         }
     }
 
     private function execute($command)
     {
-        $output = shell_exec($command);
+        $output = null;
+        $retval = null;
+        logDebug($command);
+        exec($command, $output, $retval);
+
+        if ($retval != 0) {
+            logDebug("Returned with status $retval and output: \n");
+            print_r($output);
+            exit ($retval);
+        }
+
         return $output;
     }
 }
