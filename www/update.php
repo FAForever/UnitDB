@@ -64,6 +64,7 @@ function copyFolder($sourceFolder, $destinationFolder)
     logDebug("Copy '$sourceFolder' to '$destinationFolder' succeeded.\n");
   } else {
     logDebug("Failed to copy '$sourceFolder' to '$destinationFolder'.\n");
+    logDebug("Status = ".$returnStatus." Output:".$output."\n");
   }
 }
 
@@ -86,7 +87,8 @@ function deleteFolder($folder)
     if ($returnStatus === 0) {
         logDebug("Deleted folder '$folder' succeeded.\n");
     } else {
-        logDebug("Failed to delete folder '$folder'.\n");
+        logDebug("Failed to delete folder '$folder'. \n");
+        logDebug("Status = ".$returnStatus." Output:".$output."\n");
     }
 }
 
@@ -122,6 +124,8 @@ function getFiles(string $directory): array
     return $allFiles;
 }
 
+// Note: Built-in PHP file functions under Windows will accept forward slashes as directory separators, such as is_dir(), is_file(), etc. 
+// Shell commands such as exec() are an exception. Use DIRECTORY_SEPARATOR constant to prepare path names.
 function path(...$parts) {
   // Remove leading and trailing slashes from each part before joining them.
   $parts = array_map(function($part) {
@@ -204,12 +208,13 @@ $git->clone($repoDir, $version);
 copyFolder($repoDir . "/projectiles", path($dataFolder, 'projectiles'));
 copyFolder($repoDir . "/units", path($dataFolder, 'units'));
 copyFolder($repoDir . "/loc", path($locFolder, 'loc', 'loc'));
+
 unzipFiles("data/gamedata/projectiles.scd.3599", path($dataFolder, 'projectiles.3599'));
 unzipFiles("data/gamedata/units.scd.3599", path($dataFolder, 'units.3599'));
 unzipFiles("data/loc/loc_US.scd.3599", path($locFolder, 'loc_US.3599'));
 unzipFiles("data/loc/loc.nx2", path($locFolder, 'loc.nx2'));
 
-$folders = [ 'projectiles.3599', 'units.3599', 'projectiles', 'units', 'loc\\loc_US.3599', 'loc\\loc.nx2'];
+$folders = [ 'projectiles.3599', 'units.3599', 'projectiles', 'units', 'loc/loc_US.3599', 'loc/loc.nx2'];
 $valid_types = [ 'unit.bp', 'proj.bp', 'db.lua' ];
 
 $blueprints = array();
@@ -220,7 +225,7 @@ $locFiles = array();
 // The .3599 folders must be read first, otherwise old values will appear in the results.
 
 foreach ($folders as $thisFolder) {
-	$thisPath = $dataFolder."\\".$thisFolder;
+	$thisPath = $dataFolder."/".$thisFolder;
 
 	$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($thisPath));
 	foreach ($iterator as $file) {

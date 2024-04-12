@@ -26,7 +26,6 @@ class Git
             }
         } else {
             $out = $this->execute("git clone {$escRepo} {$escDestDir}");
-            print_r($out);
         }
     }
 
