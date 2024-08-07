@@ -63,13 +63,12 @@
         }
 
         
-        //    the rof is rounded down to the nearest tick since the game runs in ticks. (If the units RoF is 0.8 it means it should fire every 1.25 seconds but it fires every 1.2 seconds)
-        //    some weapons also have separate charge and reload times which results in them firing less often. yeah.
+        //    some weapons have separate charge and reload times which results in them firing less often.
         //    in theory if your total MuzzleSalvoDelay is longer than the reload time your weapon waits for the reload time twice,
         //    but thats pretty much a bug so not taken into account here
-        
-        ///  BTW - SpookyDB uses round(), not floor(), based on the values seen there.  Values will not match between DBs.  floor() is the correct method.
-        $trueReload = max(0.1*floor(10 / ($weapon["RateOfFire"] ?? 1)), 0.1); 
+
+        // Supcom rounding tie breaks towards evens
+        $trueReload = max(0.1*round(10 / ($weapon["RateOfFire"] ?? 1), 0, PHP_ROUND_HALF_EVEN), 0.1); 
         $trueReload = max(
                 ($weapon["RackSalvoChargeTime"] ?? 0) + ($weapon["RackSalvoReloadTime"] ?? 0) + 
                     ($weapon["MuzzleSalvoDelay"] ?? 0)*(($weapon["MuzzleSalvoSize"] ?? 1)-1), 
