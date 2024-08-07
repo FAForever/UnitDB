@@ -69,7 +69,7 @@
         //    but thats pretty much a bug so not taken into account here
         
         ///  BTW - SpookyDB uses round(), not floor(), based on the values seen there.  Values will not match between DBs.  floor() is the correct method.
-        $trueReload = max(0.1*floor(10 / $weapon["RateOfFire"]), 0.1); 
+        $trueReload = max(0.1*floor(10 / ($weapon["RateOfFire"] ?? 1)), 0.1); 
         $trueReload = max(
                 ($weapon["RackSalvoChargeTime"] ?? 0) + ($weapon["RackSalvoReloadTime"] ?? 0) + 
                     ($weapon["MuzzleSalvoDelay"] ?? 0)*(($weapon["MuzzleSalvoSize"] ?? 1)-1), 
