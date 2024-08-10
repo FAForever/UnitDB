@@ -33,7 +33,7 @@ function trimval($str)
   $str = trim($str);
 
   // Evaluated numbers used in fire rates like '10/10'
-  if (preg_match('/^((?:[0-9\.]+ *[\/+-] *)*[0-9\.]+),?$/', $str, $matches))
+  if (preg_match('/^((?:[0-9\.]+\w*[\/+-]\w*)*[0-9\.]+),?$/', $str, $matches))
   {
     eval('$str = ' . $matches[1] . ';');
     return (float)$str == (int)$str ? (int)$str : (float)$str;
